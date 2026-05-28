@@ -41,6 +41,13 @@ body{font-family:'IBM Plex Sans',sans-serif;background:#f1f5f9;min-height:100vh;
 .hdr-date{background:#152d4a;border:1px solid #2d5a8e;border-radius:6px;color:#fff;padding:5px 9px;font-size:11px;outline:none;font-family:inherit}
 .sync-status{font-size:10px;min-width:100px;text-align:right}
 .sync-ok{color:#86efac}.sync-saving{color:#fbbf24}.sync-err{color:#fca5a5}.sync-idle{color:#64748b}
+.sync-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;flex-shrink:0}
+.sync-dot.dot-green{background:#22c55e;box-shadow:0 0 6px #22c55e}
+.sync-dot.dot-yellow{background:#fbbf24;box-shadow:0 0 6px #fbbf24;animation:pulse-dot 1s infinite}
+.sync-dot.dot-red{background:#ef4444;box-shadow:0 0 6px #ef4444}
+.sync-dot.dot-gray{background:#475569}
+.sync-indicator{display:flex;align-items:center;gap:4px;font-size:10px;color:#93c5fd}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
 .hdr-user{display:flex;align-items:center;gap:7px;border-left:1px solid #2d5a8e;padding-left:12px}
 .hdr-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
 .hdr-uname{font-size:11px;color:#c7d9ef}
@@ -238,7 +245,10 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
       <button class="tab-btn" id="tab-historial" onclick="setTab('historial')">📅 Historial</button>
     </div>
     <input class="hdr-date" id="date-picker" type="date" onchange="changeDate(this.value)"/>
-    <div class="sync-status sync-idle" id="sync-status">—</div>
+    <div class="sync-indicator" id="sync-status">
+      <span class="sync-dot dot-gray" id="sync-dot"></span>
+      <span id="sync-label">—</span>
+    </div>
     <div class="export-btns" style="display:flex;gap:5px">
       <button class="btn-exp" onclick="openSyncModal()" id="btn-sync" style="color:#7c3aed;border-color:#e9d5ff">🔗 Sync</button>
       <button class="btn-exp" onclick="openModal()" style="color:#0369a1;border-color:#bae6fd">📋 Listas</button>
@@ -429,13 +439,26 @@ function scheduleSave(){
 }
 
 function showSync(s){
-  const el=document.getElementById('sync-status');
-  if(!el)return;
-  el.className='sync-status ';
-  if(s==='saving'){el.className+='sync-saving';el.textContent='↻ guardando...';}
-  else if(s==='saved'){el.className+='sync-ok';el.textContent='✓ guardado';}
-  else if(s==='err'){el.className+='sync-err';el.textContent='✗ error';}
-  else{el.className+='sync-idle';el.textContent='—';}
+  const dot=document.getElementById('sync-dot');
+  const label=document.getElementById('sync-label');
+  if(!dot||!label) return;
+  dot.className='sync-dot';
+  if(s==='saving'){
+    dot.classList.add('dot-yellow');
+    label.textContent='guardando...';
+  } else if(s==='saved'){
+    dot.classList.add(_fbUrl?'dot-green':'dot-gray');
+    label.textContent=_fbUrl?'sincronizado':'guardado';
+  } else if(s==='err'){
+    dot.classList.add('dot-red');
+    label.textContent='error';
+  } else if(s==='connected'){
+    dot.classList.add('dot-green');
+    label.textContent='conectado';
+  } else {
+    dot.classList.add('dot-gray');
+    label.textContent=_fbUrl?'esperando...':'sin sync';
+  }
 }
 
 // ===================== AUTH =====================
@@ -488,6 +511,8 @@ function setTab(t){
 function changeDate(d){
   state.date=d;
   state.day=loadDay(d);
+  // Restart real-time stream for new date
+  if(_fbUrl) startFbStream(d);
   renderContent();
 }
 
@@ -1686,7 +1711,7 @@ async function connectSync(){
     startFbPoll();
     updateSyncStatusDetail();
     closeSyncModal();
-    showSync('saved');
+    showSync('connected');
     // Push current day immediately
     if(state.day) await fbSaveDay(state.day);
   } catch(e){
@@ -1699,17 +1724,79 @@ function disconnectSync(){
   localStorage.removeItem('caja_firebase_url');
   stopFbPoll();
   updateSyncStatusDetail();
+  showSync('idle');
 }
 
 function startFbPoll(){
   stopFbPoll();
-  _fbPollTimer=setInterval(fbPoll, 3000);
+  // Start real-time stream for current day
+  startFbStream(state.date);
+  // Also poll every 30s as fallback
+  _fbPollTimer=setInterval(fbPoll, 30000);
 }
 function stopFbPoll(){
   if(_fbPollTimer){ clearInterval(_fbPollTimer); _fbPollTimer=null; }
+  stopFbStream();
+}
+
+// ---- SSE Real-time stream ----
+let _fbStream = null;
+let _fbStreamDate = null;
+
+function startFbStream(date){
+  stopFbStream();
+  if(!_fbUrl) return;
+  _fbStreamDate = date;
+  try{
+    const url = getFbBase()+'/day_'+date+'.json';
+    _fbStream = new EventSource(url);
+    _fbStream.addEventListener('put', function(e){
+      try{
+        const data = JSON.parse(e.data);
+        const remote = data.data;
+        if(!remote) return;
+        const remoteTs = remote.lastModified||0;
+        const key = 'day_'+date;
+        const localTs = _fbLastUpdate[key]||0;
+        if(remoteTs > localTs && remote.modifiedBy !== state.user){
+          _fbLastUpdate[key] = remoteTs;
+          state.day = remote;
+          // Also save to localStorage
+          try{ localStorage.setItem('caja_day_'+date, JSON.stringify(remote)); }catch(ex){}
+          renderContent();
+          showSync('saved');
+        }
+      }catch(ex){}
+    });
+    _fbStream.addEventListener('patch', function(e){
+      try{
+        const data = JSON.parse(e.data);
+        if(data && data.data){
+          Object.assign(state.day, data.data);
+          renderContent();
+          showSync('saved');
+        }
+      }catch(ex){}
+    });
+    _fbStream.onerror = function(){
+      showSync('err');
+      // Retry after 5s
+      stopFbStream();
+      setTimeout(function(){ if(_fbUrl) startFbStream(_fbStreamDate); }, 5000);
+    };
+    _fbStream.onopen = function(){
+      showSync('connected');
+    };
+  }catch(ex){}
+}
+
+function stopFbStream(){
+  if(_fbStream){ _fbStream.close(); _fbStream=null; }
+  _fbStreamDate=null;
 }
 
 async function fbPoll(){
+  // Fallback poll in case stream fails
   if(!_fbUrl||!state.date) return;
   try{
     const key='day_'+state.date;
@@ -1717,7 +1804,6 @@ async function fbPoll(){
     if(!r.ok) return;
     const remote=await r.json();
     if(!remote) return;
-    // Only update if newer than what we have
     const remoteTs=remote.lastModified||0;
     const localTs=(_fbLastUpdate[key])||0;
     if(remoteTs>localTs && remote.modifiedBy!==state.user){
