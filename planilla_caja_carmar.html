@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0070)https://martinmaxi-max.github.io/caja-carmar/planilla_caja_carmar.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Planilla de Caja — Carlos Martín e Hijos S.A.</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="./Planilla de Caja — Carlos Martín e Hijos S.A._files/css2" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'IBM Plex Sans',sans-serif;background:#f1f5f9;min-height:100vh;color:#0f172a}
@@ -203,11 +203,11 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
   #header{height:auto;padding:8px 14px;gap:8px}
 }
 </style>
-</head>
+<script src="./Planilla de Caja — Carlos Martín e Hijos S.A._files/xlsx.full.min.js.descarga"></script></head>
 <body>
 
 <!-- LOGIN -->
-<div id="login">
+<div id="login" style="display: none;">
   <div class="login-card">
     <div class="login-logo">
       <span class="icon">💰</span>
@@ -216,53 +216,71 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     </div>
     <div style="font-size:11px;font-weight:500;color:#374151;margin-bottom:9px">Usuario</div>
     <div class="users-grid">
-      <button class="user-btn" id="btn-maxi" onclick="selectUser('maxi')">
+      <button class="user-btn sel-maxi" id="btn-maxi" onclick="selectUser(&#39;maxi&#39;)">
         <span class="uname">Maximiliano</span>
         <span class="urole">Acceso completo</span>
       </button>
-      <button class="user-btn" id="btn-marisol" onclick="selectUser('marisol')">
+      <button class="user-btn" id="btn-marisol" onclick="selectUser(&#39;marisol&#39;)">
         <span class="uname">Marisol</span>
         <span class="urole">Solo Tesorería</span>
       </button>
     </div>
     <span class="pin-label">PIN</span>
-    <input class="pin-input" id="pin-input" type="password" maxlength="6" placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <div class="login-err" id="login-err"></div>
+    <input class="pin-input" id="pin-input" type="password" maxlength="6" placeholder="••••" onkeydown="if(event.key===&#39;Enter&#39;)doLogin()">
+    <div class="login-err" id="login-err" style="display: none;">PIN incorrecto</div>
     <button class="btn-login" onclick="doLogin()">Ingresar</button>
     <div class="pin-hint">PIN predeterminado: 1234</div>
   </div>
 </div>
 
 <!-- MAIN APP -->
-<div id="main-app">
+<div id="main-app" style="display: flex; flex-direction: column;">
   <div id="header">
     <div class="hdr-logo">💰 Caja CARMAR <span>Carlos Martín e Hijos S.A.</span></div>
     <div class="hdr-tabs">
-      <button class="tab-btn active" id="tab-dia" onclick="setTab('dia')">📋 Día</button>
-      <button class="tab-btn" id="tab-resumen" onclick="setTab('resumen')">📊 Resumen</button>
-      <button class="tab-btn" id="tab-dolares" onclick="setTab('dolares')">💵 Dólares</button>
-      <button class="tab-btn" id="tab-arqueo" onclick="setTab('arqueo')">⚖️ Arqueo</button>
-      <button class="tab-btn" id="tab-historial" onclick="setTab('historial')">📅 Historial</button>
+      <button class="tab-btn active" id="tab-dia" onclick="setTab(&#39;dia&#39;)">📋 Día</button>
+      <button class="tab-btn" id="tab-resumen" onclick="setTab(&#39;resumen&#39;)">📊 Resumen</button>
+      <button class="tab-btn" id="tab-dolares" onclick="setTab(&#39;dolares&#39;)">💵 Dólares</button>
+      <button class="tab-btn" id="tab-arqueo" onclick="setTab(&#39;arqueo&#39;)">⚖️ Arqueo</button>
+      <button class="tab-btn" id="tab-historial" onclick="setTab(&#39;historial&#39;)">📅 Historial</button>
     </div>
-    <input class="hdr-date" id="date-picker" type="date" onchange="changeDate(this.value)"/>
+    <input class="hdr-date" id="date-picker" type="date" onchange="changeDate(this.value)">
     <div class="sync-indicator" id="sync-status">
-      <span class="sync-dot dot-gray" id="sync-dot"></span>
-      <span id="sync-label">—</span>
+      <span class="sync-dot dot-green" id="sync-dot"></span>
+      <span id="sync-label">conectado</span>
     </div>
     <div class="export-btns" style="display:flex;gap:5px">
-      <button class="btn-exp" onclick="openSyncModal()" id="btn-sync" style="color:#7c3aed;border-color:#e9d5ff">🔗 Sync</button>
+      <button class="btn-exp" onclick="openSyncModal()" id="btn-sync" style="color: rgb(124, 58, 237); border-color: rgb(233, 213, 255); background: rgb(240, 253, 244);">🔗 Sync</button>
       <button class="btn-exp" onclick="openModal()" style="color:#0369a1;border-color:#bae6fd">📋 Listas</button>
       <button class="btn-exp" onclick="confirmClearData()" style="color:#dc2626;border-color:#fca5a5" title="Borrar todos los datos">🗑️ Borrar datos</button>
     </div>
-    <button class="filter-btn" id="btn-filter-pending" onclick="togglePendingFilter()" style="display:none">&#9203; Pendientes <span id="pending-badge" class="pending-badge none">0</span></button>
+    <button class="filter-btn" id="btn-filter-pending" onclick="togglePendingFilter()" style="display: none;">⏳ Pendientes <span id="pending-badge" class="pending-badge none">1</span></button>
     <div class="hdr-user">
-      <div class="hdr-avatar" id="hdr-av">M</div>
-      <span class="hdr-uname" id="hdr-uname">—</span>
-      <button id="btn-pin" onclick="openPinModal()" style="display:none;padding:3px 9px;background:transparent;border:1px solid #2d5a8e;border-radius:5px;color:#93c5fd;font-size:10px;cursor:pointer;font-family:inherit">🔑 PINs</button>
+      <div class="hdr-avatar" id="hdr-av" style="background: rgb(232, 240, 254); color: rgb(30, 58, 95);">M</div>
+      <span class="hdr-uname" id="hdr-uname">Maximiliano</span>
+      <button id="btn-pin" onclick="openPinModal()" style="display: inline-block; padding: 3px 9px; background: transparent; border: 1px solid rgb(45, 90, 142); border-radius: 5px; color: rgb(147, 197, 253); font-size: 10px; cursor: pointer; font-family: inherit;">🔑 PINs</button>
       <button class="btn-logout" onclick="doLogout()">salir</button>
     </div>
   </div>
-  <div id="content"></div>
+  <div id="content">
+  <div class="day-header">
+    <div>
+      <div class="day-title">Invalid Date</div>
+      <div class="day-subtitle">Acceso completo — Ingresos + Egresos + Arqueo</div>
+      <div style="margin-top:4px;display:inline-block;background:#fef9c3;border:1px solid #fde68a;border-radius:5px;padding:3px 9px;font-size:10px;color:#854d0e;font-weight:500">✏️ Editando día pasado — los cambios se guardan automáticamente</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button onclick="generateDayPDF(&#39;&#39;)" style="padding:5px 12px;background:#fff;color:#0369a1;border:1px solid #bae6fd;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">📄 Descargar PDF</button>
+      <button onclick="closeDayFn()" style="padding:5px 12px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">🔒 Cerrar día</button>
+    </div>
+  </div>
+  <div class="saldo-grid">
+    <div class="saldo-card"><div class="slabel">Saldo Inicial</div><input id="si-manual" class="sval sv-blue si-input" type="text" placeholder="0,00" oninput="updateSI(this.value)" style="font-size: 14px; font-weight: 600; color: rgb(30, 58, 95); border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: transparent; outline: none; width: 100%; text-align: right;"><div class="si-auto" id="si-source">Primer dia — editable</div></div>
+    <div class="saldo-card"><div class="slabel">Ingresos (afecta caja)</div><div class="sval sv-green">$ 0,00</div><div class="si-auto" style="color:#166534">Total bruto: $ 0,00</div></div>
+    <div class="saldo-card"><div class="slabel">Egresos (Ef + Cheques)</div><div class="sval sv-red">$ 0,00</div></div>
+    <div class="saldo-card highlight"><div class="slabel">Saldo Final</div><div class="sval sv-blue">$ 0,00</div></div>
+  </div>
+  <div class="two-col has-ing"><div class="section"><div class="section-head sh-green"><span class="section-title">INGRESOS CM</span><span class="section-badge">$ 0,00</span></div><div class="tbl-wrap"><table class="data"><thead><tr><th style="min-width:110px">Cuenta</th><th style="min-width:100px">Caja</th><th style="min-width:130px">Concepto</th><th class="ar">Monto</th><th></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3"><button class="btn-add btn-add-caja" onclick="addIng()">+ Agregar fila</button></td><td class="tfoot-num" style="color:#166534">$ 0,00</td><td></td></tr></tfoot></table></div></div><div class="section"><div class="section-head sh-red"><span class="section-title">EGRESOS</span><span id="egr-badge" class="section-badge">$ 0,00</span></div><div class="tbl-wrap"><table class="data" style="min-width:700px"><thead><tr><th>Tipo</th><th style="min-width:100px">Cuenta</th><th style="min-width:120px">Proveedor / Concepto</th><th class="ar" style="min-width:75px">Monto</th><th class="ar" style="min-width:65px">Efectivo</th><th class="ar" style="min-width:65px">Cheques</th><th style="min-width:150px">No afecta.</th><th class="ar" style="min-width:65px">Control</th><th>Estado</th><th></th></tr></thead><tbody></tbody><tfoot><tr><td></td><td colspan="2" style="padding:6px 10px"><button class="btn-add btn-add-caja" data-tipo="CAJA" onclick="addEgrBtn(this)" style="margin-right:5px">+ Caja</button><button class="btn-add btn-add-tes" data-tipo="TESORERIA" onclick="addEgrBtn(this)">+ Tesorería</button></td><td id="egr-tot-monto" class="tfoot-num" style="color:#9a3412">$ 0,00</td><td id="egr-tot-ef" class="tfoot-num-sm">$ 0,00</td><td id="egr-tot-ca" class="tfoot-num-sm">$ 0,00</td><td id="egr-tot-pr" class="tfoot-num-sm">$ 0,00</td><td colspan="3"></td></tr></tfoot></table></div></div></div></div>
 </div>
 
 
@@ -271,17 +289,17 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
   <div class="modal-box">
     <div class="modal-title">Importar Cuentas y Proveedores desde Excel</div>
     <div class="modal-sub">Seleccioná un archivo .xlsx. Podés mapear cada columna a la lista correspondiente.</div>
-    <input type="file" id="listas-file" accept=".xlsx,.xls" style="display:none" onchange="onListasFile(event)"/>
-    <button onclick="document.getElementById('listas-file').click()" style="padding:8px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;color:#0369a1">📂 Elegir archivo Excel</button>
-    <div id="listas-filename" style="font-size:11px;color:#64748b;margin-top:6px"></div>
-    <div id="modal-cols-wrap" class="modal-cols"></div>
+    <input type="file" id="listas-file" accept=".xlsx,.xls" style="display:none" onchange="onListasFile(event)">
+    <button onclick="document.getElementById(&#39;listas-file&#39;).click()" style="padding:8px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;color:#0369a1">📂 Elegir archivo Excel</button>
+    <div id="listas-filename" style="font-size:11px;color:#64748b;margin-top:6px">Archivo: LISTAS.xlsx</div>
+    <div id="modal-cols-wrap" class="modal-cols"><div style="font-size:11px;font-weight:600;color:#374151;margin-top:14px;margin-bottom:6px">Columnas detectadas — asigná cada una:</div><div class="col-row"><div><div class="col-name">Cuentas Egreso</div><div class="col-preview">ALQUILERES, BANCO CREDICOOP C/C, BANCO GALICIA C/C...</div></div><select class="col-sel" id="col-map-0"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div><div class="col-row"><div><div class="col-name">Proveedores</div><div class="col-preview">A B C  SA, ABB S.A.U., ADDATO PABLO CRISTIAN...</div></div><select class="col-sel" id="col-map-1"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div><div class="col-row"><div><div class="col-name">Cuentas Ingreso</div><div class="col-preview">EFECTIVO, CHEQUES FISICOS, ECHEQS...</div></div><select class="col-sel" id="col-map-3"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div><div class="col-row"><div><div class="col-name">Caja Ingreso </div><div class="col-preview">MOSTRADOR, TESORERIA, GENERAL</div></div><select class="col-sel" id="col-map-4"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div><div class="col-row"><div><div class="col-name">Concepto Ingreso</div><div class="col-preview">COBRANZAS CONTADO, COBRANZAS CUENTAS CORRIENTES, EXTRACCIONES BANCARIAS...</div></div><select class="col-sel" id="col-map-5"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div></div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="closeModal()">Cancelar</button>
-      <button class="btn-modal-ok" id="btn-importar-listas" style="display:none" onclick="applyListasImport()">✓ Importar</button>
+      <button class="btn-modal-ok" id="btn-importar-listas" style="" onclick="applyListasImport()">✓ Importar</button>
     </div>
   </div>
 </div>
-<input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)"/>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
 
 
 
@@ -294,11 +312,11 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     <div style="font-size:11px;color:#64748b;text-align:center;margin-bottom:20px">Solo Maximiliano puede modificar los PINs</div>
     <div style="margin-bottom:14px">
       <label style="font-size:11px;font-weight:500;color:#374151;display:block;margin-bottom:5px">PIN — Maximiliano</label>
-      <input id="pin-maxi-new" type="password" maxlength="8" placeholder="Nuevo PIN (dejar vacío para no cambiar)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:16px;letter-spacing:4px;text-align:center;outline:none;font-family:monospace"/>
+      <input id="pin-maxi-new" type="password" maxlength="8" placeholder="Nuevo PIN (dejar vacío para no cambiar)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:16px;letter-spacing:4px;text-align:center;outline:none;font-family:monospace">
     </div>
     <div style="margin-bottom:20px">
       <label style="font-size:11px;font-weight:500;color:#374151;display:block;margin-bottom:5px">PIN — Marisol</label>
-      <input id="pin-marisol-new" type="password" maxlength="8" placeholder="Nuevo PIN (dejar vacío para no cambiar)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:16px;letter-spacing:4px;text-align:center;outline:none;font-family:monospace"/>
+      <input id="pin-marisol-new" type="password" maxlength="8" placeholder="Nuevo PIN (dejar vacío para no cambiar)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:16px;letter-spacing:4px;text-align:center;outline:none;font-family:monospace">
     </div>
     <div id="pin-modal-msg" style="display:none;padding:7px 10px;border-radius:6px;font-size:11px;margin-bottom:12px"></div>
     <div style="display:flex;gap:8px">
@@ -323,10 +341,9 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     </div>
     <div style="margin-bottom:14px">
       <label style="font-size:11px;font-weight:500;color:#374151;display:block;margin-bottom:6px">URL de Firebase</label>
-      <input id="firebase-url-input" type="text" placeholder="https://tu-proyecto-default-rtdb.firebaseio.com"
-        style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;box-sizing:border-box"/>
+      <input id="firebase-url-input" type="text" placeholder="https://tu-proyecto-default-rtdb.firebaseio.com" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;box-sizing:border-box">
     </div>
-    <div id="sync-status-detail" style="font-size:11px;color:#64748b;margin-bottom:14px;min-height:18px"></div>
+    <div id="sync-status-detail" style="font-size:11px;color:#64748b;margin-bottom:14px;min-height:18px"><span class="sync-live">✓ Conectado a: https://carmar-caja-default-rtdb.firebaseio.com</span></div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="closeSyncModal()">Cerrar</button>
       <button class="btn-modal-cancel" onclick="disconnectSync()" style="color:#dc2626;border-color:#fca5a5">Desconectar</button>
@@ -339,19 +356,17 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
 <div class="modal-overlay" id="modal-dolares">
   <div class="modal-box" style="max-width:360px">
     <div style="font-size:28px;text-align:center;margin-bottom:8px">💵</div>
-    <div class="modal-title" id="dolar-modal-title" style="text-align:center">Importe en Dólares</div>
-    <div style="text-align:center;font-size:11px;color:#64748b;margin-bottom:18px" id="dolar-modal-sub"></div>
+    <div class="modal-title" id="dolar-modal-title" style="text-align:center">Egreso en Dólares</div>
+    <div style="text-align:center;font-size:11px;color:#64748b;margin-bottom:18px" id="dolar-modal-sub">Ingresá la cantidad de dólares pagados</div>
     <div style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:16px">
       <div style="font-size:10px;color:#64748b;margin-bottom:4px">Importe en pesos registrado</div>
-      <div id="dolar-pesos-display" style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#0f172a"></div>
+      <div id="dolar-pesos-display" style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:16px;font-weight:600;color:#0f172a">$ 0,00</div>
     </div>
     <div style="margin-bottom:16px">
       <label style="font-size:11px;font-weight:500;color:#374151;display:block;margin-bottom:7px">Cantidad de dólares (USD)</label>
       <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;background:#fff">
         <span style="font-size:13px;color:#64748b">USD</span>
-        <input id="dolar-usd-input" type="number" min="0" step="0.01" placeholder="0.00"
-          style="flex:1;border:none;outline:none;font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#0f172a"
-          onkeydown="if(event.key==='Enter')confirmDolar()"/>
+        <input id="dolar-usd-input" type="number" min="0" step="0.01" placeholder="0.00" style="flex:1;border:none;outline:none;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:16px;font-weight:600;color:#0f172a" onkeydown="if(event.key===&#39;Enter&#39;)confirmDolar()">
       </div>
     </div>
     <div class="modal-actions">
@@ -421,9 +436,13 @@ function getPrevDate(date){
 function getPrevSF(date){
   try{
     const raw=localStorage.getItem('caja_day_'+getPrevDate(date));
-    if(!raw)return null;
+    if(!raw) return null;
     const prev=JSON.parse(raw);
-    const tI=prev.ingresos?prev.ingresos.reduce(function(s,r){return s+pn(r.monto);},0):0;
+    if(!prev) return null;
+    // Only count ingresos that affect caja (same logic as calcs())
+    const tI=prev.ingresos?prev.ingresos.filter(function(r){
+      return afectaCajaFn(r.cuenta);
+    }).reduce(function(s,r){return s+pn(r.monto);},0):0;
     const tEf=prev.egresos?prev.egresos.reduce(function(s,r){return s+pn(r.efectivo);},0):0;
     const tCa=prev.egresos?prev.egresos.reduce(function(s,r){return s+pn(r.cartera);},0):0;
     return pn(prev.saldoInicial)+tI-tEf-tCa;
@@ -567,11 +586,18 @@ function setTab(t){
   document.getElementById('tab-historial').classList.toggle('active',t==='historial');
   renderContent();
 }
+function normalizeDate(d){
+  if(!d) return todayStr();
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){const [dd,mm,yyyy]=d.split('/');return `${yyyy}-${mm}-${dd}`;}
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  return todayStr();
+}
 function changeDate(d){
-  state.date=d;
-  state.day=loadDay(d);
-  // Restart real-time stream for new date
-  if(_fbUrl) startFbStream(d);
+  const clean=normalizeDate(d);
+  state.date=clean;
+  document.getElementById('date-picker').value=clean;
+  state.day=loadDay(clean);
+  if(_fbUrl) startFbStream(clean);
   renderContent();
 }
 
@@ -1501,9 +1527,11 @@ function renderHistorial(){
 }
 
 function goToDay(date){
-  state.date=date;
-  state.day=loadDay(date);
-  document.getElementById('date-picker').value=date;
+  const clean=normalizeDate(date);
+  state.date=clean;
+  state.day=loadDay(clean);
+  document.getElementById('date-picker').value=clean;
+  if(_fbUrl) startFbStream(clean);
   setTab('dia');
 }
 
@@ -1968,5 +1996,6 @@ document.addEventListener('DOMContentLoaded', function(){
   initSync();
 });
 </script>
-</body>
-</html>
+
+
+</body></html>
