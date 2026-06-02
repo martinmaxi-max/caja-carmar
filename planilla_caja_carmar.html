@@ -203,7 +203,7 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
   #header{height:auto;padding:8px 14px;gap:8px}
 }
 </style>
-<script src="./Planilla de Caja — Carlos Martín e Hijos S.A._files/xlsx.full.min.js.descarga"></script></head>
+</head>
 <body>
 
 <!-- LOGIN -->
@@ -254,7 +254,7 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
       <button class="btn-exp" onclick="openModal()" style="color:#0369a1;border-color:#bae6fd">📋 Listas</button>
       <button class="btn-exp" onclick="confirmClearData()" style="color:#dc2626;border-color:#fca5a5" title="Borrar todos los datos">🗑️ Borrar datos</button>
     </div>
-    <button class="filter-btn" id="btn-filter-pending" onclick="togglePendingFilter()" style="display: none;">⏳ Pendientes <span id="pending-badge" class="pending-badge none">1</span></button>
+    <button class="filter-btn" id="btn-filter-pending" onclick="togglePendingFilter()" style="display:none">⏳ Pendientes <span id="pending-badge" class="pending-badge none">0</span></button>
     <div class="hdr-user">
       <div class="hdr-avatar" id="hdr-av" style="background: rgb(232, 240, 254); color: rgb(30, 58, 95);">M</div>
       <span class="hdr-uname" id="hdr-uname">Maximiliano</span>
@@ -263,24 +263,48 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     </div>
   </div>
   <div id="content">
-  <div class="day-header">
-    <div>
-      <div class="day-title">Invalid Date</div>
-      <div class="day-subtitle">Acceso completo — Ingresos + Egresos + Arqueo</div>
-      <div style="margin-top:4px;display:inline-block;background:#fef9c3;border:1px solid #fde68a;border-radius:5px;padding:3px 9px;font-size:10px;color:#854d0e;font-weight:500">✏️ Editando día pasado — los cambios se guardan automáticamente</div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button onclick="generateDayPDF(&#39;&#39;)" style="padding:5px 12px;background:#fff;color:#0369a1;border:1px solid #bae6fd;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">📄 Descargar PDF</button>
-      <button onclick="closeDayFn()" style="padding:5px 12px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">🔒 Cerrar día</button>
-    </div>
-  </div>
-  <div class="saldo-grid">
-    <div class="saldo-card"><div class="slabel">Saldo Inicial</div><input id="si-manual" class="sval sv-blue si-input" type="text" placeholder="0,00" oninput="updateSI(this.value)" style="font-size: 14px; font-weight: 600; color: rgb(30, 58, 95); border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: transparent; outline: none; width: 100%; text-align: right;"><div class="si-auto" id="si-source">Primer dia — editable</div></div>
-    <div class="saldo-card"><div class="slabel">Ingresos (afecta caja)</div><div class="sval sv-green">$ 0,00</div><div class="si-auto" style="color:#166534">Total bruto: $ 0,00</div></div>
-    <div class="saldo-card"><div class="slabel">Egresos (Ef + Cheques)</div><div class="sval sv-red">$ 0,00</div></div>
-    <div class="saldo-card highlight"><div class="slabel">Saldo Final</div><div class="sval sv-blue">$ 0,00</div></div>
-  </div>
-  <div class="two-col has-ing"><div class="section"><div class="section-head sh-green"><span class="section-title">INGRESOS CM</span><span class="section-badge">$ 0,00</span></div><div class="tbl-wrap"><table class="data"><thead><tr><th style="min-width:110px">Cuenta</th><th style="min-width:100px">Caja</th><th style="min-width:130px">Concepto</th><th class="ar">Monto</th><th></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3"><button class="btn-add btn-add-caja" onclick="addIng()">+ Agregar fila</button></td><td class="tfoot-num" style="color:#166534">$ 0,00</td><td></td></tr></tfoot></table></div></div><div class="section"><div class="section-head sh-red"><span class="section-title">EGRESOS</span><span id="egr-badge" class="section-badge">$ 0,00</span></div><div class="tbl-wrap"><table class="data" style="min-width:700px"><thead><tr><th>Tipo</th><th style="min-width:100px">Cuenta</th><th style="min-width:120px">Proveedor / Concepto</th><th class="ar" style="min-width:75px">Monto</th><th class="ar" style="min-width:65px">Efectivo</th><th class="ar" style="min-width:65px">Cheques</th><th style="min-width:150px">No afecta.</th><th class="ar" style="min-width:65px">Control</th><th>Estado</th><th></th></tr></thead><tbody></tbody><tfoot><tr><td></td><td colspan="2" style="padding:6px 10px"><button class="btn-add btn-add-caja" data-tipo="CAJA" onclick="addEgrBtn(this)" style="margin-right:5px">+ Caja</button><button class="btn-add btn-add-tes" data-tipo="TESORERIA" onclick="addEgrBtn(this)">+ Tesorería</button></td><td id="egr-tot-monto" class="tfoot-num" style="color:#9a3412">$ 0,00</td><td id="egr-tot-ef" class="tfoot-num-sm">$ 0,00</td><td id="egr-tot-ca" class="tfoot-num-sm">$ 0,00</td><td id="egr-tot-pr" class="tfoot-num-sm">$ 0,00</td><td colspan="3"></td></tr></tfoot></table></div></div></div></div>
+    <div class="resumen-wrap">
+      <div class="resumen-head">
+        <h2>Historial de Días</h2>
+        <span>2 días guardados</span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="resumen" style="font-size:11px">
+          <thead><tr>
+            <th style="text-align:left">Fecha</th>
+            <th>Saldo Ini.</th>
+            <th>Ingresos</th>
+            <th>Egresos</th>
+            <th>Saldo Final</th>
+            <th style="text-align:left">Estado</th>
+            <th style="text-align:left">Acciones</th>
+          </tr></thead>
+          <tbody><tr style="">
+      <td style="font-weight:500">mar, 2 jun 2026</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px">$ 3.979.398.259.999.998,00</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:#166534">$ 0,00</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:#9a3412">$ 0,00</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:12px;font-weight:600;color:#1e3a5f">$ 3.979.398.259.999.998,00</td>
+      <td><div><span style="background:#fef9c3;color:#854d0e;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600">Abierto</span><span style="background:#dbeafe;color:#1e40af;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600;margin-left:4px">Hoy</span></div></td>
+      <td style="white-space:nowrap;padding:4px 8px">
+        <button onclick="goToDay(&#39;2026-06-02&#39;)" style="font-size:10px;padding:3px 9px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit;color:#374151;margin-right:4px">✏️ Ver/Editar</button>
+        <button onclick="generateDayPDF(&#39;2026-06-02&#39;)" style="font-size:10px;padding:3px 9px;border:1px solid #bae6fd;border-radius:4px;background:#f0f9ff;cursor:pointer;font-family:inherit;color:#0369a1">📄 PDF</button>
+      </td>
+    </tr><tr style="background:#f8fafc">
+      <td style="font-weight:500">lun, 1 jun 2026</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px">$ 15.985.533,00</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:#166534">$ 13.275.158,26</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:#9a3412">$ 25.991.293,00</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:12px;font-weight:600;color:#1e3a5f">$ 3.979.398,26</td>
+      <td><div><span style="background:#dcfce7;color:#166534;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600">✓ Cerrado</span></div><div style="font-size:9px;color:#64748b;margin-top:2px">Cerrado el 02/06/2026, 10:13 a. m. por Maximiliano</div></td>
+      <td style="white-space:nowrap;padding:4px 8px">
+        <button onclick="goToDay(&#39;2026-06-01&#39;)" style="font-size:10px;padding:3px 9px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit;color:#374151;margin-right:4px">✏️ Ver/Editar</button>
+        <button onclick="generateDayPDF(&#39;2026-06-01&#39;)" style="font-size:10px;padding:3px 9px;border:1px solid #bae6fd;border-radius:4px;background:#f0f9ff;cursor:pointer;font-family:inherit;color:#0369a1">📄 PDF</button>
+      </td>
+    </tr></tbody>
+        </table>
+      </div>
+    </div></div>
 </div>
 
 
@@ -291,11 +315,11 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     <div class="modal-sub">Seleccioná un archivo .xlsx. Podés mapear cada columna a la lista correspondiente.</div>
     <input type="file" id="listas-file" accept=".xlsx,.xls" style="display:none" onchange="onListasFile(event)">
     <button onclick="document.getElementById(&#39;listas-file&#39;).click()" style="padding:8px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;color:#0369a1">📂 Elegir archivo Excel</button>
-    <div id="listas-filename" style="font-size:11px;color:#64748b;margin-top:6px">Archivo: LISTAS.xlsx</div>
-    <div id="modal-cols-wrap" class="modal-cols"><div style="font-size:11px;font-weight:600;color:#374151;margin-top:14px;margin-bottom:6px">Columnas detectadas — asigná cada una:</div><div class="col-row"><div><div class="col-name">Cuentas Egreso</div><div class="col-preview">ALQUILERES, BANCO CREDICOOP C/C, BANCO GALICIA C/C...</div></div><select class="col-sel" id="col-map-0"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div><div class="col-row"><div><div class="col-name">Proveedores</div><div class="col-preview">A B C  SA, ABB S.A.U., ADDATO PABLO CRISTIAN...</div></div><select class="col-sel" id="col-map-1"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div><div class="col-row"><div><div class="col-name">Cuentas Ingreso</div><div class="col-preview">EFECTIVO, CHEQUES FISICOS, ECHEQS...</div></div><select class="col-sel" id="col-map-3"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div><div class="col-row"><div><div class="col-name">Caja Ingreso </div><div class="col-preview">MOSTRADOR, TESORERIA, GENERAL</div></div><select class="col-sel" id="col-map-4"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div><div class="col-row"><div><div class="col-name">Concepto Ingreso</div><div class="col-preview">COBRANZAS CONTADO, COBRANZAS CUENTAS CORRIENTES, EXTRACCIONES BANCARIAS...</div></div><select class="col-sel" id="col-map-5"><option value="-- Ignorar --">-- Ignorar --</option><option value="Cuentas Egreso">Cuentas Egreso</option><option value="Proveedores / Conceptos">Proveedores / Conceptos</option><option value="Cuentas Ingreso">Cuentas Ingreso</option><option value="Caja Ingreso">Caja Ingreso</option><option value="Conceptos Ingreso">Conceptos Ingreso</option><option value="Cuentas que afectan caja">Cuentas que afectan caja</option></select></div></div>
+    <div id="listas-filename" style="font-size:11px;color:#64748b;margin-top:6px"></div>
+    <div id="modal-cols-wrap" class="modal-cols"></div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="closeModal()">Cancelar</button>
-      <button class="btn-modal-ok" id="btn-importar-listas" style="" onclick="applyListasImport()">✓ Importar</button>
+      <button class="btn-modal-ok" id="btn-importar-listas" style="display:none" onclick="applyListasImport()">✓ Importar</button>
     </div>
   </div>
 </div>
@@ -356,11 +380,11 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
 <div class="modal-overlay" id="modal-dolares">
   <div class="modal-box" style="max-width:360px">
     <div style="font-size:28px;text-align:center;margin-bottom:8px">💵</div>
-    <div class="modal-title" id="dolar-modal-title" style="text-align:center">Egreso en Dólares</div>
-    <div style="text-align:center;font-size:11px;color:#64748b;margin-bottom:18px" id="dolar-modal-sub">Ingresá la cantidad de dólares pagados</div>
+    <div class="modal-title" id="dolar-modal-title" style="text-align:center">Importe en Dólares</div>
+    <div style="text-align:center;font-size:11px;color:#64748b;margin-bottom:18px" id="dolar-modal-sub"></div>
     <div style="background:#f8fafc;border-radius:8px;padding:14px;margin-bottom:16px">
       <div style="font-size:10px;color:#64748b;margin-bottom:4px">Importe en pesos registrado</div>
-      <div id="dolar-pesos-display" style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:16px;font-weight:600;color:#0f172a">$ 0,00</div>
+      <div id="dolar-pesos-display" style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:16px;font-weight:600;color:#0f172a"></div>
     </div>
     <div style="margin-bottom:16px">
       <label style="font-size:11px;font-weight:500;color:#374151;display:block;margin-bottom:7px">Cantidad de dólares (USD)</label>
@@ -439,7 +463,6 @@ function getPrevSF(date){
     if(!raw) return null;
     const prev=JSON.parse(raw);
     if(!prev) return null;
-    // Only count ingresos that affect caja (same logic as calcs())
     const tI=prev.ingresos?prev.ingresos.filter(function(r){
       return afectaCajaFn(r.cuenta);
     }).reduce(function(s,r){return s+pn(r.monto);},0):0;
@@ -455,15 +478,25 @@ function loadDay(date){
     if(raw) d=JSON.parse(raw);
   }catch(e){}
   if(!d) d=emptyDay(date);
-  // Always recalculate SI from previous day's SF (cascade updates)
+  // Always recalculate SI from previous day's SF
   const prevSF=getPrevSF(date);
   if(prevSF!==null){
     const newSI=String(prevSF);
     if(d.saldoInicial!==newSI){
       d.saldoInicial=newSI;
-      // Save back so stored value stays in sync
       try{ localStorage.setItem('caja_day_'+date,JSON.stringify(d)); }catch(e){}
     }
+  }
+  // If empty and Firebase connected, fetch from Firebase
+  if(typeof _fbUrl!=='undefined'&&_fbUrl&&!d.ingresos.length&&!d.egresos.length){
+    fetch(getFbBase()+'/day_'+date+'.json')
+      .then(function(r){return r.json();})
+      .then(function(remote){
+        if(remote&&remote.date){
+          try{ localStorage.setItem('caja_day_'+date,JSON.stringify(remote)); }catch(e){}
+          if(state.date===date){ state.day=remote; renderContent(); }
+        }
+      }).catch(function(){});
   }
   return d;
 }
@@ -597,7 +630,7 @@ function changeDate(d){
   state.date=clean;
   document.getElementById('date-picker').value=clean;
   state.day=loadDay(clean);
-  if(_fbUrl) startFbStream(clean);
+  if(typeof _fbUrl!=='undefined'&&_fbUrl) startFbStream(clean);
   renderContent();
 }
 
@@ -1527,11 +1560,10 @@ function renderHistorial(){
 }
 
 function goToDay(date){
-  const clean=normalizeDate(date);
-  state.date=clean;
-  state.day=loadDay(clean);
-  document.getElementById('date-picker').value=clean;
-  if(_fbUrl) startFbStream(clean);
+  state.date=date;
+  state.day=loadDay(date);
+  document.getElementById('date-picker').value=date;
+  if(typeof _fbUrl!=='undefined'&&_fbUrl) startFbStream(date);
   setTab('dia');
 }
 
