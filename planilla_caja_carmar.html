@@ -258,6 +258,7 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     <div class="hdr-user">
       <div class="hdr-avatar" id="hdr-av">M</div>
       <span class="hdr-uname" id="hdr-uname">—</span>
+      <button id="btn-pin" onclick="openPinModal()" style="display:none;padding:3px 9px;background:transparent;border:1px solid #2d5a8e;border-radius:5px;color:#93c5fd;font-size:10px;cursor:pointer;font-family:inherit">🔑 PINs</button>
       <button class="btn-logout" onclick="doLogout()">salir</button>
     </div>
   </div>
@@ -284,6 +285,28 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
 
 
 
+
+<!-- MODAL CAMBIO DE PINs -->
+<div class="modal-overlay" id="modal-pins">
+  <div class="modal-box" style="max-width:340px">
+    <div style="font-size:24px;text-align:center;margin-bottom:8px">🔑</div>
+    <div class="modal-title" style="text-align:center">Cambiar PINs</div>
+    <div style="font-size:11px;color:#64748b;text-align:center;margin-bottom:20px">Solo Maximiliano puede modificar los PINs</div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;font-weight:500;color:#374151;display:block;margin-bottom:5px">PIN — Maximiliano</label>
+      <input id="pin-maxi-new" type="password" maxlength="8" placeholder="Nuevo PIN (dejar vacío para no cambiar)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:16px;letter-spacing:4px;text-align:center;outline:none;font-family:monospace"/>
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:11px;font-weight:500;color:#374151;display:block;margin-bottom:5px">PIN — Marisol</label>
+      <input id="pin-marisol-new" type="password" maxlength="8" placeholder="Nuevo PIN (dejar vacío para no cambiar)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:16px;letter-spacing:4px;text-align:center;outline:none;font-family:monospace"/>
+    </div>
+    <div id="pin-modal-msg" style="display:none;padding:7px 10px;border-radius:6px;font-size:11px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="savePins()" style="flex:1;padding:10px;background:#1e3a5f;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit">Guardar</button>
+      <button onclick="closePinModal()" style="padding:10px 16px;background:#f1f5f9;color:#374151;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL SYNC FIREBASE -->
 <div class="modal-overlay" id="modal-sync">
@@ -347,8 +370,9 @@ const CUENTAS_AFECTA_CAJA = ['CAJA EFECTIVO','CHEQUES EN CARTERA','CHEQUES FISIC
 const CONCEPTOS_ING = ["INGRESO CAJA MOSTRADOR","VENTAS","COBRANZAS CLIENTES","EXTRACCIONES BANCARIAS","APORTES CAJA DE SEGURIDAD","CHEQUES DEVUELTOS","PRESTAMO CHEQUES","IVA","DOLARES"];
 const CUENTAS_EGR = ["BANCO SANTANDER","BANCO SANTANDER C/C","BANCO NACION C/C","BANCO SAN JUAN C/C","BANCO CREDICOOP C/C","BANCO GALICIA C/C","PROVEEDORES","SUELDOS","HONORARIOS","COMISIONES","COMISIONES POR VENTAS","ALQUILERES","SEGUROS","SERVICIOS","COMBUSTIBLES","GASTOS VARIOS","FLETES Y ACARREOS POR COMPRAS","FLETES Y ACARREOS POR VENTA","IMPUESTOS DE ADMINISTRACION","IMPUESTOS DE COMERCIALIZACION","RETENCIONES","BENEFICIOS AL PERSONAL","INDEMNIZACIONES AL PERSONAL","ADELANTOS AL PERSONAL","GASTOS DE PUBLICIDAD","GASTOS DE CORREO","LIMPIEZA Y MANTENIMIENTO","LIBRERIA E IMPRENTA","REPARACIONES Y MANTENIMIENTO RODADOS","CARLOS MARTIN CTA. PARTIC","CARLOS MARTIN (H) CTA. PARTIC","RODOLFO MARTIN CTA. PARTIC","MAXIMILIANO MARTIN CTA. PARTIC","ANDRES MAS CTA. PARTIC","DONACIONES","BIENES DE USO","RODADOS","PRESTAMOS A PAGAR"];
 const PROVEEDORES = ["CAJA DE SEGURIDAD","A B C SA","ABB S.A.U.","ADDATO PABLO CRISTIAN","ADM GROUP S.R.L","AG METALURGICA S.A.","AISLANTES ELECTRICOS SRL","ALIC S.A.","ANTHAY ELECTRONICA SRL","ARGENLED ILUMINACION SRL","ARTELUM S.A.","ATOMLUX SRL","AYJ SRL","B.D.H. S. R. L.","BAEL SA","BAISTROCCHI JUAN ROBERTO LUIS","BANCO SANTANDER RIO CTA.CTE.","BARRERA NARVAEZ LUIS LEANDRO","BRUNO DAMIAN JORGE","CABLES EPUYEN S.R.L.","CAMIMPORT SRL - NOVALUCCE","CANO MUÑOZ OSCAR MAXIMILIANO","CARLOS TORRICO SRL","CCH S.R.L -COMMAX","CONDUCTRES S.R.L.","CONEXTUBE SA","EICHLER","ELECTROQUIMICA DELTA SRL","ELECTRONICS SOLUTIONS S.A","FIBOSA","GABEXEL SA","GC FABRICANTES SRL","GEN ROD S.A.","HELLERMANN TYTON SRL","HIDDEN VILLAGE S.A.","ILUMINACION RONDA SA","IMPORTADORA JA SA","IMPORTADORA SUDAMERICANA (CANDELA)","INDUSTRIA BASICA SA","INDUSTRIA MET.SUDAMERICANA SACeI","INDUSTRIAS MH SRL","INDUSTRIAS REINA","INDUSTRIAS SICA S.A.I.C","JELUZ S.A.C.I.F.I.y A","LA CAMIONERA MENDOCINA SRL","LA CASA DE LOS TERMINALES","LUZ VERDE SRL","METALTUB SAICyF","MICRO CONTROL SA","MORALES SONIA MARCELA","NIELSEN S.R.L","PADILUM SRL","PLASTICOS CABRERA SA","PRONTO LUZ SRL","RICHI SA","ROS MATERIALES ELECTRICOS SRL","SAN LORENZO ILUMINACION SRL","SCHNEIDER ELECTRIC ARGENTINA SA","SISTEMAS ELECTRICOS CONDUIT SA","STARBOX S.R.L.","TBC SA","TOHIA MAYORISTA S.A.S","WEST TEAM SA"];
-const PINS = {maxi:"1234", marisol:"1234"};
 const USERS = {maxi:{label:"Maximiliano",color:"#1e3a5f",bg:"#e8f0fe"},marisol:{label:"Marisol",color:"#6b21a8",bg:"#f3e8ff"}};
+// Load PINs from localStorage (fallback to defaults)
+const PINS = JSON.parse(localStorage.getItem('caja_pins')||'{"maxi":"1234","marisol":"1234"}');
 
 // ===================== STATE =====================
 let state = {
@@ -472,7 +496,8 @@ function doLogin(){
   const pin=document.getElementById('pin-input').value;
   const err=document.getElementById('login-err');
   if(!u){err.style.display='block';err.textContent='Seleccioná un usuario';return;}
-  if(pin!==PINS[u]){err.style.display='block';err.textContent='PIN incorrecto (prueba: 1234)';return;}
+  const stored=JSON.parse(localStorage.getItem('caja_pins')||'{"maxi":"1234","marisol":"1234"}');
+  if(pin!==stored[u]){err.style.display='block';err.textContent='PIN incorrecto';return;}
   err.style.display='none';
   state.user=u;
   document.getElementById('login').style.display='none';
@@ -485,13 +510,47 @@ function doLogin(){
   av.style.background=ud.bg;
   av.style.color=ud.color;
   document.getElementById('hdr-uname').textContent=ud.label;
+  // Mostrar botón PINs solo para Maximiliano
+  const btnPin=document.getElementById('btn-pin');
+  if(btnPin) btnPin.style.display=u==='maxi'?'inline-block':'none';
   const dp=document.getElementById('date-picker');
   dp.value=state.date;
   state.day=loadDay(state.date);
+  if(_fbUrl) startFbStream(state.date);
   renderContent();
 }
-function doLogout(){
-  state.user=null;state.selectedUser=null;
+function openPinModal(){
+  document.getElementById('pin-maxi-new').value='';
+  document.getElementById('pin-marisol-new').value='';
+  const msg=document.getElementById('pin-modal-msg');
+  msg.style.display='none';
+  document.getElementById('modal-pins').classList.add('open');
+}
+function closePinModal(){
+  document.getElementById('modal-pins').classList.remove('open');
+}
+function savePins(){
+  const newMaxi=document.getElementById('pin-maxi-new').value.trim();
+  const newMarisol=document.getElementById('pin-marisol-new').value.trim();
+  const msg=document.getElementById('pin-modal-msg');
+  if(!newMaxi && !newMarisol){
+    msg.style.display='block';
+    msg.style.background='#fef2f2';msg.style.color='#dc2626';msg.style.border='1px solid #fca5a5';
+    msg.textContent='Ingresá al menos un PIN nuevo';
+    return;
+  }
+  const stored=JSON.parse(localStorage.getItem('caja_pins')||'{"maxi":"1234","marisol":"1234"}');
+  if(newMaxi) stored.maxi=newMaxi;
+  if(newMarisol) stored.marisol=newMarisol;
+  localStorage.setItem('caja_pins', JSON.stringify(stored));
+  // Also sync to Firebase if connected
+  if(_fbUrl) fetch(getFbBase()+'/config/pins.json',{method:'PUT',body:JSON.stringify(stored)}).catch(()=>{});
+  msg.style.display='block';
+  msg.style.background='#f0fdf4';msg.style.color='#166534';msg.style.border='1px solid #bbf7d0';
+  msg.textContent='✓ PINs guardados correctamente';
+  setTimeout(()=>closePinModal(), 1500);
+}
+function doLogout(){state.selectedUser=null;
   document.getElementById('pin-input').value='';
   document.querySelectorAll('.user-btn').forEach(b=>b.classList.remove('sel-maxi','sel-marisol'));
   document.getElementById('main-app').style.display='none';
@@ -1878,6 +1937,9 @@ window.updEgrEl=updEgrEl;
 window.acInputEl=acInputEl;
 window.acFocusEl=acFocusEl;
 window.acBlurEl=acBlurEl;
+window.openPinModal=openPinModal;
+window.closePinModal=closePinModal;
+window.savePins=savePins;
 window.closeDayFn=closeDayFn;
 window.generateDayPDF=generateDayPDF;
 window.goToDay=goToDay;
