@@ -767,7 +767,8 @@ function renderEgresosHTML(rows,isAdmin,c){
     const ok=Math.abs(ctrl2)<1;
     const isTes=r.tipo==='TESORERIA';
     const byMaxi=(r.createdBy||'maxi')==='maxi';
-    const canEditMain=isAdmin||(isTes&&!byMaxi);
+    const byMe=r.createdBy===state.user;
+    const canEditMain=isAdmin||(isTes&&(!byMaxi||byMe));
     const canEditPayment=isAdmin||isTes;
     const canDelete=isAdmin||(isTes&&!byMaxi&&!r.verified)||(!isAdmin&&!byMaxi&&!r.verified);
 
