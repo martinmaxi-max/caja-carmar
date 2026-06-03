@@ -207,7 +207,7 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
 <body>
 
 <!-- LOGIN -->
-<div id="login" style="display: none;">
+<div id="login" style="display: flex;">
   <div class="login-card">
     <div class="login-logo">
       <span class="icon">💰</span>
@@ -234,7 +234,7 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
 </div>
 
 <!-- MAIN APP -->
-<div id="main-app" style="display: flex; flex-direction: column;">
+<div id="main-app" style="display: none; flex-direction: column;">
   <div id="header">
     <div class="hdr-logo">💰 Caja CARMAR <span>Carlos Martín e Hijos S.A.</span></div>
     <div class="hdr-tabs">
@@ -246,8 +246,8 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     </div>
     <input class="hdr-date" id="date-picker" type="date" onchange="changeDate(this.value)">
     <div class="sync-indicator" id="sync-status">
-      <span class="sync-dot dot-red" id="sync-dot"></span>
-      <span id="sync-label">error</span>
+      <span class="sync-dot dot-green" id="sync-dot"></span>
+      <span id="sync-label">conectado</span>
     </div>
     <div class="export-btns" style="display:flex;gap:5px">
       <button class="btn-exp" onclick="openSyncModal()" id="btn-sync" style="color: rgb(124, 58, 237); border-color: rgb(233, 213, 255); background: rgb(240, 253, 244);">🔗 Sync</button>
@@ -258,7 +258,7 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     <div class="hdr-user">
       <div class="hdr-avatar" id="hdr-av" style="background: rgb(232, 240, 254); color: rgb(30, 58, 95);">M</div>
       <span class="hdr-uname" id="hdr-uname">Maximiliano</span>
-      <button id="btn-pin" onclick="openPinModal()" style="display: inline-block; padding: 3px 9px; background: transparent; border: 1px solid rgb(45, 90, 142); border-radius: 5px; color: rgb(147, 197, 253); font-size: 10px; cursor: pointer; font-family: inherit;">🔑 PINs</button>
+      <button id="btn-pin" onclick="openPinModal()" style="display:none;padding:3px 9px;background:transparent;border:1px solid #2d5a8e;border-radius:5px;color:#93c5fd;font-size:10px;cursor:pointer;font-family:inherit">🔑 PINs</button>
       <button class="btn-logout" onclick="doLogout()">salir</button>
     </div>
   </div>
