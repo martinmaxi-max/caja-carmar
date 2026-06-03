@@ -647,6 +647,7 @@ function calcs(){
 
 // ===================== RENDER =====================
 function renderContent(){
+  if(!state.user||!state.day) return;
   if(state.tab==='dia') renderDay();
   else if(state.tab==='dolares') renderDolares();
   else if(state.tab==='historial') renderHistorial();
