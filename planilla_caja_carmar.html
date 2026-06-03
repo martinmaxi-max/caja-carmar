@@ -246,8 +246,8 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     </div>
     <input class="hdr-date" id="date-picker" type="date" onchange="changeDate(this.value)">
     <div class="sync-indicator" id="sync-status">
-      <span class="sync-dot dot-green" id="sync-dot"></span>
-      <span id="sync-label">conectado</span>
+      <span class="sync-dot dot-red" id="sync-dot"></span>
+      <span id="sync-label">error</span>
     </div>
     <div class="export-btns" style="display:flex;gap:5px">
       <button class="btn-exp" onclick="openSyncModal()" id="btn-sync" style="color: rgb(124, 58, 237); border-color: rgb(233, 213, 255); background: rgb(240, 253, 244);">🔗 Sync</button>
@@ -263,48 +263,24 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     </div>
   </div>
   <div id="content">
-    <div class="resumen-wrap">
-      <div class="resumen-head">
-        <h2>Historial de Días</h2>
-        <span>2 días guardados</span>
-      </div>
-      <div class="tbl-wrap">
-        <table class="resumen" style="font-size:11px">
-          <thead><tr>
-            <th style="text-align:left">Fecha</th>
-            <th>Saldo Ini.</th>
-            <th>Ingresos</th>
-            <th>Egresos</th>
-            <th>Saldo Final</th>
-            <th style="text-align:left">Estado</th>
-            <th style="text-align:left">Acciones</th>
-          </tr></thead>
-          <tbody><tr style="">
-      <td style="font-weight:500">mar, 2 jun 2026</td>
-      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px">$ 3.979.398.259.999.998,00</td>
-      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:#166534">$ 0,00</td>
-      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:#9a3412">$ 0,00</td>
-      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:12px;font-weight:600;color:#1e3a5f">$ 3.979.398.259.999.998,00</td>
-      <td><div><span style="background:#fef9c3;color:#854d0e;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600">Abierto</span><span style="background:#dbeafe;color:#1e40af;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600;margin-left:4px">Hoy</span></div></td>
-      <td style="white-space:nowrap;padding:4px 8px">
-        <button onclick="goToDay(&#39;2026-06-02&#39;)" style="font-size:10px;padding:3px 9px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit;color:#374151;margin-right:4px">✏️ Ver/Editar</button>
-        <button onclick="generateDayPDF(&#39;2026-06-02&#39;)" style="font-size:10px;padding:3px 9px;border:1px solid #bae6fd;border-radius:4px;background:#f0f9ff;cursor:pointer;font-family:inherit;color:#0369a1">📄 PDF</button>
-      </td>
-    </tr><tr style="background:#f8fafc">
-      <td style="font-weight:500">lun, 1 jun 2026</td>
-      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px">$ 15.985.533,00</td>
-      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:#166534">$ 13.275.158,26</td>
-      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:#9a3412">$ 25.991.293,00</td>
-      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:12px;font-weight:600;color:#1e3a5f">$ 3.979.398,26</td>
-      <td><div><span style="background:#dcfce7;color:#166534;font-size:9px;padding:2px 8px;border-radius:8px;font-weight:600">✓ Cerrado</span></div><div style="font-size:9px;color:#64748b;margin-top:2px">Cerrado el 02/06/2026, 10:13 a. m. por Maximiliano</div></td>
-      <td style="white-space:nowrap;padding:4px 8px">
-        <button onclick="goToDay(&#39;2026-06-01&#39;)" style="font-size:10px;padding:3px 9px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit;color:#374151;margin-right:4px">✏️ Ver/Editar</button>
-        <button onclick="generateDayPDF(&#39;2026-06-01&#39;)" style="font-size:10px;padding:3px 9px;border:1px solid #bae6fd;border-radius:4px;background:#f0f9ff;cursor:pointer;font-family:inherit;color:#0369a1">📄 PDF</button>
-      </td>
-    </tr></tbody>
-        </table>
-      </div>
-    </div></div>
+  <div class="day-header">
+    <div>
+      <div class="day-title">martes, 2 de junio de 2026</div>
+      <div class="day-subtitle">Acceso completo — Ingresos + Egresos + Arqueo</div>
+      <div style="margin-top:4px;display:inline-block;background:#fef9c3;border:1px solid #fde68a;border-radius:5px;padding:3px 9px;font-size:10px;color:#854d0e;font-weight:500">✏️ Editando día pasado — los cambios se guardan automáticamente</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button onclick="generateDayPDF(&#39;2026-06-02&#39;)" style="padding:5px 12px;background:#fff;color:#0369a1;border:1px solid #bae6fd;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">📄 Descargar PDF</button>
+      <button onclick="closeDayFn()" style="padding:5px 12px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">🔒 Cerrar día</button>
+    </div>
+  </div>
+  <div class="saldo-grid">
+    <div class="saldo-card"><div class="slabel">Saldo Inicial</div><div class="sval sv-blue">$ 3.269.398.259.999.998,00</div><div class="si-auto" id="si-source">Del 2026-06-01</div></div>
+    <div class="saldo-card"><div class="slabel">Ingresos (afecta caja)</div><div class="sval sv-green">$ 0,00</div><div class="si-auto" style="color:#166534">Total bruto: $ 0,00</div></div>
+    <div class="saldo-card"><div class="slabel">Egresos (Ef + Cheques)</div><div class="sval sv-red">$ 0,00</div></div>
+    <div class="saldo-card highlight"><div class="slabel">Saldo Final</div><div class="sval sv-blue">$ 3.269.398.259.999.998,00</div></div>
+  </div>
+  <div class="two-col has-ing"><div class="section"><div class="section-head sh-green"><span class="section-title">INGRESOS CM</span><span class="section-badge">$ 0,00</span></div><div class="tbl-wrap"><table class="data"><thead><tr><th style="min-width:110px">Cuenta</th><th style="min-width:100px">Caja</th><th style="min-width:130px">Concepto</th><th class="ar">Monto</th><th></th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3"><button class="btn-add btn-add-caja" onclick="addIng()">+ Agregar fila</button></td><td class="tfoot-num" style="color:#166534">$ 0,00</td><td></td></tr></tfoot></table></div></div><div class="section"><div class="section-head sh-red"><span class="section-title">EGRESOS</span><span id="egr-badge" class="section-badge">$ 0,00</span></div><div class="tbl-wrap"><table class="data" style="min-width:700px"><thead><tr><th>Tipo</th><th style="min-width:100px">Cuenta</th><th style="min-width:120px">Proveedor / Concepto</th><th class="ar" style="min-width:75px">Monto</th><th class="ar" style="min-width:65px">Efectivo</th><th class="ar" style="min-width:65px">Cheques</th><th style="min-width:150px">No afecta.</th><th class="ar" style="min-width:65px">Control</th><th>Estado</th><th></th></tr></thead><tbody></tbody><tfoot><tr><td></td><td colspan="2" style="padding:6px 10px"><button class="btn-add btn-add-caja" data-tipo="CAJA" onclick="addEgrBtn(this)" style="margin-right:5px">+ Caja</button><button class="btn-add btn-add-tes" data-tipo="TESORERIA" onclick="addEgrBtn(this)">+ Tesorería</button></td><td id="egr-tot-monto" class="tfoot-num" style="color:#9a3412">$ 0,00</td><td id="egr-tot-ef" class="tfoot-num-sm">$ 0,00</td><td id="egr-tot-ca" class="tfoot-num-sm">$ 0,00</td><td id="egr-tot-pr" class="tfoot-num-sm">$ 0,00</td><td colspan="3"></td></tr></tfoot></table></div></div></div></div>
 </div>
 
 
@@ -490,7 +466,8 @@ function loadDay(date){
   // Always recalculate SI from previous day's SF
   const prevSF=getPrevSF(date);
   if(prevSF!==null){
-    const newSI=String(prevSF);
+    // Store in Argentine format (comma as decimal) so pn() reads it correctly
+    const newSI=fnd(prevSF);
     if(d.saldoInicial!==newSI){
       d.saldoInicial=newSI;
       try{ localStorage.setItem('caja_day_'+date,JSON.stringify(d)); }catch(e){}
@@ -2026,19 +2003,19 @@ document.addEventListener('DOMContentLoaded', function(){
   if(pi) pi.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
   // Auto-clear old data on this fresh version
-  var CURRENT_VERSION='2025-06-A';
+  var CURRENT_VERSION='2026-06-B';
   var savedVersion=localStorage.getItem('caja_app_version');
   if(savedVersion && savedVersion!==CURRENT_VERSION){
-    if(confirm('Se detectó datos de una versión anterior. ¿Borrar y empezar de cero?')){
-      var keys=[];
-      for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.startsWith('caja_')&&k!=='caja_app_version') keys.push(k);}
-      keys.forEach(function(k){localStorage.removeItem(k);});
-    }
+    // Auto-clear old data on version change
+    var keys=[];
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.startsWith('caja_')&&k!=='caja_app_version'&&k!=='caja_pins'&&k!=='caja_firebase_url') keys.push(k);}
+    keys.forEach(function(k){localStorage.removeItem(k);});
   }
   localStorage.setItem('caja_app_version', CURRENT_VERSION);
   initSync();
 });
 </script>
+
 
 
 </body></html>
