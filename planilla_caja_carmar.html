@@ -463,12 +463,19 @@ function getPrevSF(date){
     if(!raw) return null;
     const prev=JSON.parse(raw);
     if(!prev) return null;
+    const AFECTA=['CAJA EFECTIVO','CHEQUES EN CARTERA','CHEQUES FISICOS','CHEQUES','ECHEQS','ECHEQ','CAJA'];
     const tI=prev.ingresos?prev.ingresos.filter(function(r){
-      return afectaCajaFn(r.cuenta);
+      if(!r.cuenta) return true;
+      const u=r.cuenta.toUpperCase();
+      return AFECTA.some(function(c){return u===c;})||['CHEQUE','ECHEQ','EFECTIVO'].some(function(k){return u.includes(k);});
     }).reduce(function(s,r){return s+pn(r.monto);},0):0;
     const tEf=prev.egresos?prev.egresos.reduce(function(s,r){return s+pn(r.efectivo);},0):0;
     const tCa=prev.egresos?prev.egresos.reduce(function(s,r){return s+pn(r.cartera);},0):0;
-    return pn(prev.saldoInicial)+tI-tEf-tCa;
+    const si=pn(prev.saldoInicial);
+    const sf=si+tI-tEf-tCa;
+    // Safety check — if result is unreasonably large, return null
+    if(Math.abs(sf)>999999999999) return null;
+    return sf;
   }catch(e){return null;}
 }
 function loadDay(date){
@@ -478,6 +485,8 @@ function loadDay(date){
     if(raw) d=JSON.parse(raw);
   }catch(e){}
   if(!d) d=emptyDay(date);
+  // Sanitize saldoInicial — if unreasonably large, reset it
+  if(Math.abs(pn(d.saldoInicial))>999999999999) d.saldoInicial='';
   // Always recalculate SI from previous day's SF
   const prevSF=getPrevSF(date);
   if(prevSF!==null){
@@ -493,6 +502,8 @@ function loadDay(date){
       .then(function(r){return r.json();})
       .then(function(remote){
         if(remote&&remote.date){
+          // Sanitize remote saldoInicial too
+          if(Math.abs(pn(remote.saldoInicial))>999999999999) remote.saldoInicial='';
           try{ localStorage.setItem('caja_day_'+date,JSON.stringify(remote)); }catch(e){}
           if(state.date===date){ state.day=remote; renderContent(); }
         }
