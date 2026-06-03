@@ -130,9 +130,10 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
 /* -------- AUTOCOMPLETE -------- */
 .ac-wrap{position:relative}
 .ac-wrap input{width:100%}
-.ac-dropdown{position:absolute;top:100%;left:0;z-index:9999;background:#fff;border:1px solid #e2e8f0;border-radius:7px;min-width:180px;max-width:320px;max-height:175px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.12)}
-.ac-item{padding:5px 10px;font-size:11px;cursor:pointer;color:#0f172a;font-family:'IBM Plex Sans',sans-serif}
+.ac-dropdown{position:absolute;top:100%;left:0;z-index:9999;background:#fff;border:1px solid #e2e8f0;border-radius:7px;min-width:260px;max-width:420px;max-height:500px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.ac-item{padding:7px 12px;font-size:12px;cursor:pointer;color:#0f172a;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;border-bottom:1px solid #f1f5f9}
 .ac-item:hover{background:#f0f9ff;color:#1e3a5f}
+.ac-item:last-child{border-bottom:none}
 /* -------- MISC -------- */
 .export-bar{display:flex;gap:8px;margin-bottom:12px;justify-content:flex-end}
 .btn-exp{font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;color:#374151;font-family:inherit}
@@ -239,7 +240,6 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     <div class="hdr-logo">💰 Caja CARMAR <span>Carlos Martín e Hijos S.A.</span></div>
     <div class="hdr-tabs">
       <button class="tab-btn active" id="tab-dia" onclick="setTab(&#39;dia&#39;)">📋 Día</button>
-      <button class="tab-btn" id="tab-resumen" onclick="setTab(&#39;resumen&#39;)">📊 Resumen</button>
       <button class="tab-btn" id="tab-dolares" onclick="setTab(&#39;dolares&#39;)">💵 Dólares</button>
       <button class="tab-btn" id="tab-arqueo" onclick="setTab(&#39;arqueo&#39;)">⚖️ Arqueo</button>
       <button class="tab-btn" id="tab-historial" onclick="setTab(&#39;historial&#39;)">📅 Historial</button>
@@ -601,7 +601,6 @@ function doLogout(){state.selectedUser=null;
 function setTab(t){
   state.tab=t;
   document.getElementById('tab-dia').classList.toggle('active',t==='dia');
-  document.getElementById('tab-resumen').classList.toggle('active',t==='resumen');
   document.getElementById('tab-dolares').classList.toggle('active',t==='dolares');
   document.getElementById('tab-arqueo').classList.toggle('active',t==='arqueo');
   document.getElementById('tab-historial').classList.toggle('active',t==='historial');
@@ -652,7 +651,7 @@ function renderContent(){
   else if(state.tab==='dolares') renderDolares();
   else if(state.tab==='historial') renderHistorial();
   else if(state.tab==='arqueo') renderArqueoTab();
-  else renderResumen();
+  else renderDay();
 }
 
 function renderDay(){
