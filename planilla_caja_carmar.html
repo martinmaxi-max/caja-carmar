@@ -413,7 +413,16 @@ function emptyDay(date){return {date,saldoInicial:'',ingresos:[],egresos:[],arqu
 // ===================== NUMBERS =====================
 function pn(s){
   if(s===''||s===undefined||s===null)return 0;
-  const cleaned=String(s).replace(/[^\d,.-]/g,'');
+  const str=String(s).trim();
+  const cleaned=str.replace(/[^\d,.-]/g,'');
+  if(!cleaned) return 0;
+  const dotCount=(cleaned.match(/\./g)||[]).length;
+  const commaCount=(cleaned.match(/,/g)||[]).length;
+  // If only one dot and no comma → English decimal (e.g. "3979398.26")
+  if(dotCount===1&&commaCount===0){
+    return parseFloat(cleaned)||0;
+  }
+  // Argentine format: dots=thousands, comma=decimal (e.g. "3.979.398,26")
   const normalized=cleaned.replace(/\./g,'').replace(',','.');
   return parseFloat(normalized)||0;
 }
@@ -2004,19 +2013,9 @@ document.addEventListener('DOMContentLoaded', function(){
   if(pi) pi.addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
   // Auto-clear old data on this fresh version
-  var CURRENT_VERSION='2026-06-B';
+  var CURRENT_VERSION='2026-06-C';
   var savedVersion=localStorage.getItem('caja_app_version');
   if(savedVersion && savedVersion!==CURRENT_VERSION){
     // Auto-clear old data on version change
     var keys=[];
-    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.startsWith('caja_')&&k!=='caja_app_version'&&k!=='caja_pins'&&k!=='caja_firebase_url') keys.push(k);}
-    keys.forEach(function(k){localStorage.removeItem(k);});
-  }
-  localStorage.setItem('caja_app_version', CURRENT_VERSION);
-  initSync();
-});
-</script>
-
-
-
-</body></html>
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(
