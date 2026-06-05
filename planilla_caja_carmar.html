@@ -470,6 +470,10 @@ function loadDay(date){
     if(raw) d=JSON.parse(raw);
   }catch(e){}
   if(!d) d=emptyDay(date);
+  // Ensure arrays always exist
+  if(!d.ingresos) d.ingresos=[];
+  if(!d.egresos) d.egresos=[];
+  if(!d.arqueo) d.arqueo=emptyArqueo();
   // Sanitize saldoInicial — if unreasonably large, reset it
   if(Math.abs(pn(d.saldoInicial))>999999999999) d.saldoInicial='';
   // Always recalculate SI from previous day's SF
@@ -488,7 +492,10 @@ function loadDay(date){
       .then(function(r){return r.json();})
       .then(function(remote){
         if(remote&&remote.date){
-          // Sanitize remote saldoInicial too
+          // Sanitize remote data
+          if(!remote.ingresos) remote.ingresos=[];
+          if(!remote.egresos) remote.egresos=[];
+          if(!remote.arqueo) remote.arqueo=emptyArqueo();
           if(Math.abs(pn(remote.saldoInicial))>999999999999) remote.saldoInicial='';
           try{ localStorage.setItem('caja_day_'+date,JSON.stringify(remote)); }catch(e){}
           if(state.date===date){ state.day=remote; renderContent(); }
