@@ -463,6 +463,45 @@ function getPrevSF(date){
     return sf;
   }catch(e){return null;}
 }
+// Saldo Final de caja de un día (misma fórmula que getPrevSF/calcs)
+function dayCajaSF(d){
+  if(!d) return 0;
+  const si=pn(d.saldoInicial);
+  const tI=d.ingresos?d.ingresos.filter(function(r){return afectaCajaFn(r.cuenta);}).reduce(function(s,r){return s+pn(r.monto);},0):0;
+  const tEf=d.egresos?d.egresos.reduce(function(s,r){return s+pn(r.efectivo);},0):0;
+  const tCa=d.egresos?d.egresos.reduce(function(s,r){return s+pn(r.cartera);},0):0;
+  return si+tI-tEf-tCa;
+}
+// Recalcula EN CADENA el Saldo Inicial de todos los días: cada día toma como
+// SI el Saldo Final del día anterior. Persiste y sincroniza solo lo que cambió.
+function recalcChain(){
+  let days=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('caja_day_')){
+      try{ const data=JSON.parse(localStorage.getItem(k)); if(data&&data.date) days.push(data); }catch(e){}
+    }
+  }
+  days.sort(function(a,b){return a.date.localeCompare(b.date);}); // ascendente
+  const byDate={};
+  days.forEach(function(d){byDate[d.date]=d;});
+  let anyChanged=false;
+  days.forEach(function(cur){
+    const prev=byDate[getPrevDate(cur.date)]; // solo encadena días consecutivos
+    if(prev){
+      const sf=dayCajaSF(prev);
+      if(Math.abs(sf)>999999999999) return; // mismo tope de seguridad que getPrevSF
+      const newSI=fnd(sf); // formato argentino para que pn() lo lea bien
+      if(cur.saldoInicial!==newSI){
+        cur.saldoInicial=newSI;
+        try{ localStorage.setItem('caja_day_'+cur.date,JSON.stringify(cur)); }catch(e){}
+        if(typeof _fbUrl!=='undefined'&&_fbUrl) fbSaveDay(cur);
+        anyChanged=true;
+      }
+    }
+  });
+  return anyChanged;
+}
 function loadDay(date){
   let d;
   try{
@@ -1502,6 +1541,7 @@ function getAllDays(){
 }
 
 function renderHistorial(){
+  recalcChain();
   const days=getAllDays();
   if(!days.length){
     document.getElementById('content').innerHTML=`
@@ -1518,7 +1558,7 @@ function renderHistorial(){
     const tCa=d.egresos?d.egresos.reduce(function(s,r){return s+pn(r.cartera);},0):0;
     const tEg=d.egresos?d.egresos.reduce(function(s,r){return s+pn(r.monto);},0):0;
     const si=pn(d.saldoInicial);
-    const sf=si+tI-tEf-tCa;
+    const sf=dayCajaSF(d);
     const fechaObj=new Date(d.date+'T12:00:00');
     const fechaLabel=fechaObj.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
     const estadoBadge=d.closed
