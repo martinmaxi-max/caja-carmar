@@ -525,8 +525,11 @@ function loadDay(date){
       try{ localStorage.setItem('caja_day_'+date,JSON.stringify(d)); }catch(e){}
     }
   }
-  // If empty and Firebase connected, fetch from Firebase
-  if(typeof _fbUrl!=='undefined'&&_fbUrl&&!d.ingresos.length&&!d.egresos.length){
+  // Si hay Firebase conectado, traer SIEMPRE la última versión del día
+  // (antes solo lo hacía si el día estaba vacío). Aplica lo remoto solo si
+  // es igual o más nuevo que lo local, para no pisar ediciones más nuevas.
+  if(typeof _fbUrl!=='undefined'&&_fbUrl){
+    const localTs=(d&&d.lastModified)||0;
     fetch(getFbBase()+'/day_'+date+'.json')
       .then(function(r){return r.json();})
       .then(function(remote){
@@ -536,14 +539,19 @@ function loadDay(date){
           if(!remote.egresos) remote.egresos=[];
           if(!remote.arqueo) remote.arqueo=emptyArqueo();
           if(Math.abs(pn(remote.saldoInicial))>999999999999) remote.saldoInicial='';
-          try{ localStorage.setItem('caja_day_'+date,JSON.stringify(remote)); }catch(e){}
-          if(state.date===date){ state.day=remote; renderContent(); }
+          const remoteTs=remote.lastModified||0;
+          if(remoteTs>=localTs){
+            try{ localStorage.setItem('caja_day_'+date,JSON.stringify(remote)); }catch(e){}
+            if(state.date===date){ state.day=remote; renderContent(); }
+          }
         }
       }).catch(function(){});
   }
   return d;
 }
 function saveDay(d){
+  d.lastModified=Date.now();
+  d.modifiedBy=state.user;
   try{
     localStorage.setItem('caja_day_'+d.date,JSON.stringify(d));
     showSync('saved');
@@ -1983,8 +1991,9 @@ async function fbSaveDay(d){
   if(!_fbUrl) return;
   try{
     const key='day_'+d.date;
-    const toSave={...d, lastModified:Date.now(), modifiedBy:state.user};
-    _fbLastUpdate[key]=toSave.lastModified;
+    const ts=d.lastModified||Date.now();
+    const toSave={...d, lastModified:ts, modifiedBy:d.modifiedBy||state.user};
+    _fbLastUpdate[key]=ts;
     await fetch(getFbBase()+'/'+key+'.json',{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
