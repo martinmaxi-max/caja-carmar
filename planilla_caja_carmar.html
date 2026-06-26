@@ -1367,6 +1367,7 @@ function applyListasImport(){
     CUENTAS_AFECTA_CAJA.splice(0,CUENTAS_AFECTA_CAJA.length,...mapping['Cuentas que afectan caja']);
     localStorage.setItem('caja_lista_afecta_caja',JSON.stringify(CUENTAS_AFECTA_CAJA));
   }
+  if(typeof _fbUrl!=='undefined'&&_fbUrl) fbSaveLists();
   closeModal();
   renderContent();
   alert('\u2713 Listas importadas correctamente.');
@@ -1886,6 +1887,8 @@ async function connectSync(){
     showSync('connected');
     // Push current day immediately
     if(state.day) await fbSaveDay(state.day);
+    // Traer/sincronizar las listas compartidas
+    await fbLoadLists();
   } catch(e){
     if(el) el.innerHTML='<span class="sync-err">✗ No se pudo conectar: '+e.message+'</span>';
   }
@@ -2002,13 +2005,52 @@ async function fbSaveDay(d){
   }catch(e){}
 }
 
+// ---- Sincronización de LISTAS (cuentas, proveedores, conceptos) por Firebase ----
+const _LIST_KEYS=['caja_lista_cuentas_egr','caja_lista_proveedores','caja_lista_cuentas_ing','caja_lista_cajas_ing','caja_lista_conceptos_ing','caja_lista_afecta_caja'];
+async function fbSaveLists(){
+  if(!_fbUrl) return;
+  try{
+    const payload={};
+    _LIST_KEYS.forEach(function(k){
+      const v=localStorage.getItem(k);
+      if(v!==null){ try{ payload[k]=JSON.parse(v); }catch(e){} }
+    });
+    await fetch(getFbBase()+'/config/lists.json',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+  }catch(e){}
+}
+async function fbLoadLists(){
+  if(!_fbUrl) return;
+  try{
+    const r=await fetch(getFbBase()+'/config/lists.json');
+    if(!r.ok) return;
+    const remote=await r.json();
+    if(remote && typeof remote==='object'){
+      let any=false;
+      _LIST_KEYS.forEach(function(k){
+        if(remote[k]!==undefined && remote[k]!==null){
+          try{ localStorage.setItem(k, JSON.stringify(remote[k])); any=true; }catch(e){}
+        }
+      });
+      if(any){ loadLists(); if(state.user) renderContent(); }
+    } else {
+      // Firebase todavía no tiene listas: sembrar SOLO si esta máquina tiene listas propias
+      const hasLocal=_LIST_KEYS.some(function(k){return localStorage.getItem(k)!==null;});
+      if(hasLocal) fbSaveLists();
+    }
+  }catch(e){}
+}
+
 // Override saveDay to also push to Firebase
 const _origSaveDay=saveDay;
 
 // Init: restore Firebase URL if saved
 function initSync(){
   const saved=localStorage.getItem('caja_firebase_url');
-  if(saved){ _fbUrl=saved; startFbPoll(); }
+  if(saved){ _fbUrl=saved; startFbPoll(); fbLoadLists(); }
   updateSyncStatusDetail();
 }
 
