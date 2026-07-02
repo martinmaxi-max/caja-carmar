@@ -389,6 +389,19 @@ const USERS = {maxi:{label:"Maximiliano",color:"#1e3a5f",bg:"#e8f0fe"},marisol:{
 // Load PINs from localStorage (fallback to defaults)
 const PINS = JSON.parse(localStorage.getItem('caja_pins')||'{"maxi":"1234","marisol":"1234"}');
 
+// ID único de ESTA máquina. Sirve para distinguir los cambios propios de los
+// de la OTRA máquina, aunque las dos entren con el mismo usuario (ej: Marisol
+// logueada como "maxi"). Se genera una sola vez por navegador y queda guardado.
+const _clientId = (function(){
+  let id=null;
+  try{ id=localStorage.getItem('caja_client_id'); }catch(e){}
+  if(!id){
+    id='c_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+    try{ localStorage.setItem('caja_client_id', id); }catch(e){}
+  }
+  return id;
+})();
+
 // ===================== STATE =====================
 let state = {
   user: null,
@@ -1549,7 +1562,48 @@ function getAllDays(){
   return days.sort(function(a,b){return b.date.localeCompare(a.date);});
 }
 
+// Baja TODOS los días desde Firebase y los mezcla en localStorage quedándose
+// con la versión más nueva de cada día (por lastModified). Devuelve true si
+// algo cambió, para volver a dibujar. Así las dos máquinas convergen al dato real.
+async function fbLoadAllDays(){
+  if(typeof _fbUrl==='undefined'||!_fbUrl) return false;
+  try{
+    const r=await fetch(getFbBase()+'/.json');
+    if(!r.ok) return false;
+    const all=await r.json();
+    if(!all) return false;
+    let changed=false;
+    Object.keys(all).forEach(function(k){
+      if(k.indexOf('day_')!==0) return;
+      const remote=all[k];
+      if(!remote||!remote.date) return;
+      if(!remote.ingresos) remote.ingresos=[];
+      if(!remote.egresos) remote.egresos=[];
+      if(!remote.arqueo) remote.arqueo=emptyArqueo();
+      if(Math.abs(pn(remote.saldoInicial))>999999999999) remote.saldoInicial='';
+      const lsKey='caja_day_'+remote.date;
+      let local=null;
+      try{ const raw=localStorage.getItem(lsKey); if(raw) local=JSON.parse(raw); }catch(e){}
+      const localTs=(local&&local.lastModified)||0;
+      const remoteTs=remote.lastModified||0;
+      if(!local || remoteTs>localTs){
+        try{ localStorage.setItem(lsKey, JSON.stringify(remote)); changed=true; }catch(e){}
+      }
+    });
+    return changed;
+  }catch(e){ return false; }
+}
+
+// Al abrir el Historial: dibuja al instante con lo que hay local y, en paralelo,
+// baja TODOS los días de Firebase; si algo cambió, redibuja ya sincronizado.
 function renderHistorial(){
+  renderHistorialNow();
+  fbLoadAllDays().then(function(changed){
+    if(changed && state.tab==='historial') renderHistorialNow();
+  });
+}
+
+function renderHistorialNow(){
   recalcChain();
   const days=getAllDays();
   if(!days.length){
@@ -1933,7 +1987,7 @@ function startFbStream(date){
         const remoteTs = remote.lastModified||0;
         const key = 'day_'+date;
         const localTs = _fbLastUpdate[key]||0;
-        if(remoteTs > localTs && remote.modifiedBy !== state.user){
+        if(remoteTs > localTs && remote.modifiedByClient !== _clientId){
           _fbLastUpdate[key] = remoteTs;
           state.day = remote;
           // Also save to localStorage
@@ -1981,7 +2035,7 @@ async function fbPoll(){
     if(!remote) return;
     const remoteTs=remote.lastModified||0;
     const localTs=(_fbLastUpdate[key])||0;
-    if(remoteTs>localTs && remote.modifiedBy!==state.user){
+    if(remoteTs>localTs && remote.modifiedByClient!==_clientId){
       _fbLastUpdate[key]=remoteTs;
       state.day=remote;
       renderContent();
@@ -1995,7 +2049,7 @@ async function fbSaveDay(d){
   try{
     const key='day_'+d.date;
     const ts=d.lastModified||Date.now();
-    const toSave={...d, lastModified:ts, modifiedBy:d.modifiedBy||state.user};
+    const toSave={...d, lastModified:ts, modifiedBy:d.modifiedBy||state.user, modifiedByClient:_clientId};
     _fbLastUpdate[key]=ts;
     await fetch(getFbBase()+'/'+key+'.json',{
       method:'PUT',
