@@ -243,6 +243,7 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
       <button class="tab-btn" id="tab-dolares" onclick="setTab(&#39;dolares&#39;)">💵 Dólares</button>
       <button class="tab-btn" id="tab-arqueo" onclick="setTab(&#39;arqueo&#39;)">⚖️ Arqueo</button>
       <button class="tab-btn" id="tab-historial" onclick="setTab(&#39;historial&#39;)">📅 Historial</button>
+      <button class="tab-btn" id="tab-reporte" onclick="setTab(&#39;reporte&#39;)">📆 Reporte</button>
     </div>
     <input class="hdr-date" id="date-picker" type="date" onchange="changeDate(this.value)">
     <div class="sync-indicator" id="sync-status">
@@ -252,6 +253,8 @@ table.resumen tfoot td:first-child{font-family:'IBM Plex Sans',sans-serif;font-s
     <div class="export-btns" style="display:flex;gap:5px">
       <button class="btn-exp" onclick="openSyncModal()" id="btn-sync" style="color: rgb(124, 58, 237); border-color: rgb(233, 213, 255); background: rgb(240, 253, 244);">🔗 Sync</button>
       <button class="btn-exp" onclick="openModal()" style="color:#0369a1;border-color:#bae6fd">📋 Listas</button>
+      <button class="btn-exp" onclick="downloadBackup()" style="color:#166534;border-color:#bbf7d0" title="Descargar copia de seguridad de todos los datos de esta máquina">💾 Backup</button>
+      <button class="btn-exp" onclick="importData()" style="color:#b45309;border-color:#fde68a" title="Restaurar datos desde un archivo de backup">⬆️ Restaurar</button>
       <button class="btn-exp" onclick="confirmClearData()" style="color:#dc2626;border-color:#fca5a5" title="Borrar todos los datos">🗑️ Borrar datos</button>
     </div>
     <button class="filter-btn" id="btn-filter-pending" onclick="togglePendingFilter()" style="display:none">⏳ Pendientes <span id="pending-badge" class="pending-badge none">0</span></button>
@@ -680,6 +683,7 @@ function setTab(t){
   document.getElementById('tab-dolares').classList.toggle('active',t==='dolares');
   document.getElementById('tab-arqueo').classList.toggle('active',t==='arqueo');
   document.getElementById('tab-historial').classList.toggle('active',t==='historial');
+  var _tr=document.getElementById('tab-reporte'); if(_tr) _tr.classList.toggle('active',t==='reporte');
   renderContent();
 }
 function normalizeDate(d){
@@ -727,6 +731,7 @@ function renderContent(){
   else if(state.tab==='dolares') renderDolares();
   else if(state.tab==='historial') renderHistorial();
   else if(state.tab==='arqueo') renderArqueoTab();
+  else if(state.tab==='reporte') renderReporte();
   else renderDay();
 }
 
@@ -1881,6 +1886,206 @@ window.onload=function(){
 }
 
 
+// ===================== BACKUP =====================
+// Descarga una copia de seguridad de TODO lo de esta máquina (días + listas +
+// config), con fecha y hora en el nombre. Se puede restaurar con "Restaurar".
+function downloadBackup(){
+  const data={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('caja_')) data[k]=localStorage.getItem(k);
+  }
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const now=new Date();
+  const p=function(n){return String(n).padStart(2,'0');};
+  const stamp=now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate())+'_'+p(now.getHours())+p(now.getMinutes());
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='backup_caja_carmar_'+stamp+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===================== REPORTE MENSUAL =====================
+// Devuelve los días (de localStorage) de un mes 'YYYY-MM', ordenados ascendente.
+function getDaysOfMonth(month){
+  const days=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('caja_day_'+month)){
+      try{ const d=JSON.parse(localStorage.getItem(k)); if(d&&d.date) days.push(d); }catch(e){}
+    }
+  }
+  return days.sort(function(a,b){return a.date.localeCompare(b.date);});
+}
+
+function setReporteMonth(m){ state._repMonth=m||state.date.slice(0,7); renderReporte(); }
+
+function renderReporte(){
+  const el=document.getElementById('content');
+  if(!state._repMonth) state._repMonth=state.date.slice(0,7);
+  const month=state._repMonth;
+  const days=getDaysOfMonth(month);
+  let mIng=0,mEg=0;
+  days.forEach(function(d){
+    mIng+=(d.ingresos||[]).reduce(function(s,r){return s+pn(r.monto);},0);
+    mEg+=(d.egresos||[]).reduce(function(s,r){return s+pn(r.monto);},0);
+  });
+  let rows='';
+  days.forEach(function(d,i){
+    const tI=(d.ingresos||[]).reduce(function(s,r){return s+pn(r.monto);},0);
+    const tEg=(d.egresos||[]).reduce(function(s,r){return s+pn(r.monto);},0);
+    const si=pn(d.saldoInicial);
+    const sf=dayCajaSF(d);
+    const fl=new Date(d.date+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+    rows+='<tr style="'+(i%2===0?'':'background:#f8fafc')+'">'+
+      '<td style="font-weight:500">'+fl+'</td>'+
+      '<td style="text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:11px">$ '+fnd(si)+'</td>'+
+      '<td style="text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#166534">$ '+fnd(tI)+'</td>'+
+      '<td style="text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#9a3412">$ '+fnd(tEg)+'</td>'+
+      '<td style="text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:600;color:'+(sf>=0?'#1e3a5f':'#dc2626')+'">$ '+fnd(sf)+'</td>'+
+      '<td style="font-size:10px;color:#64748b">'+(d.closed?'✓ Cerrado':'Abierto')+'</td></tr>';
+  });
+  if(!rows) rows='<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px">No hay días cargados en este mes.</td></tr>';
+
+  el.innerHTML=
+    '<div class="resumen-wrap">'+
+      '<div class="resumen-head"><h2>Reporte Mensual</h2><span>'+days.length+' día'+(days.length!==1?'s':'')+' en el mes</span></div>'+
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 4px">'+
+        '<label style="font-size:12px;color:#374151">Mes:</label>'+
+        '<input type="month" id="rep-month" value="'+month+'" onchange="setReporteMonth(this.value)" style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:13px">'+
+        '<button onclick="generateMonthPDF(\''+month+'\')" style="padding:8px 14px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📄 Descargar PDF del mes</button>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px">'+
+        '<div style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;background:#f8fafc"><div style="font-size:9px;color:#64748b">Total Ingresos del mes</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:14px;font-weight:700;color:#166534">$ '+fnd(mIng)+'</div></div>'+
+        '<div style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;background:#f8fafc"><div style="font-size:9px;color:#64748b">Total Egresos del mes</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:14px;font-weight:700;color:#991b1b">$ '+fnd(mEg)+'</div></div>'+
+        '<div style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;background:#f8fafc"><div style="font-size:9px;color:#64748b">Días cargados</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:14px;font-weight:700;color:#1e3a5f">'+days.length+'</div></div>'+
+      '</div>'+
+      '<div class="tbl-wrap"><table class="resumen" style="font-size:11px">'+
+        '<thead><tr><th style="text-align:left">Fecha</th><th>Saldo Ini.</th><th>Ingresos</th><th>Egresos</th><th>Saldo Final</th><th style="text-align:left">Estado</th></tr></thead>'+
+        '<tbody>'+rows+'</tbody></table></div>'+
+    '</div>';
+}
+
+function generateMonthPDF(month){
+  const days=getDaysOfMonth(month);
+  if(!days.length){ alert('No hay días cargados en '+month+'.'); return; }
+  const html=buildMonthPDFHTML(days, month);
+  const w=window.open('','_blank','width=900,height=700');
+  if(!w){ alert('Tu navegador bloqueó el popup. Permití ventanas emergentes para esta página.'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 800);
+}
+
+function buildMonthPDFHTML(days, month){
+  const genAt=new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const monthLabel=new Date(month+'-01T12:00:00').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  const AFECTA=['CAJA EFECTIVO','CHEQUES EN CARTERA','CHEQUES FISICOS','CHEQUES','ECHEQS','ECHEQ','CAJA'];
+  function afecta(cuenta){ if(!cuenta)return true; const u=cuenta.toUpperCase(); if(AFECTA.some(function(c){return u===c.toUpperCase();}))return true; return ['CHEQUE','ECHEQ','EFECTIVO'].some(function(k){return u.includes(k);}); }
+  function _pn(s){if(s===''||s===undefined||s===null)return 0;const cl=String(s).replace(/[^\d,.-]/g,'');return parseFloat(cl.replace(/\./g,'').replace(',','.'))||0;}
+  function _fn(v){const n=parseFloat(v)||0;return new Intl.NumberFormat('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
+
+  let mIng=0,mEg=0;
+  let sumRows='';
+  days.forEach(function(d){
+    const tI=(d.ingresos||[]).reduce(function(s,r){return s+_pn(r.monto);},0);
+    const tEg=(d.egresos||[]).reduce(function(s,r){return s+_pn(r.monto);},0);
+    const tEf=(d.egresos||[]).reduce(function(s,r){return s+_pn(r.efectivo);},0);
+    const tCa=(d.egresos||[]).reduce(function(s,r){return s+_pn(r.cartera);},0);
+    const si=_pn(d.saldoInicial);
+    const ingAf=(d.ingresos||[]).filter(function(r){return afecta(r.cuenta);}).reduce(function(s,r){return s+_pn(r.monto);},0);
+    const sf=si+ingAf-tEf-tCa;
+    mIng+=tI; mEg+=tEg;
+    const fl=new Date(d.date+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+    sumRows+='<tr><td>'+fl+'</td>'+
+      '<td style="text-align:right;font-family:monospace">$ '+_fn(si)+'</td>'+
+      '<td style="text-align:right;font-family:monospace;color:#166534">$ '+_fn(tI)+'</td>'+
+      '<td style="text-align:right;font-family:monospace;color:#991b1b">$ '+_fn(tEg)+'</td>'+
+      '<td style="text-align:right;font-family:monospace;font-weight:700;color:'+(sf>=0?'#1e3a5f':'#dc2626')+'">$ '+_fn(sf)+'</td>'+
+      '<td style="font-size:9px">'+(d.closed?'✓ Cerrado':'Abierto')+'</td></tr>';
+  });
+
+  let dayBlocks='';
+  days.forEach(function(d){
+    const fechaLabel=new Date(d.date+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const totIngTotal=(d.ingresos||[]).reduce(function(s,r){return s+_pn(r.monto);},0);
+    const ingAf=(d.ingresos||[]).filter(function(r){return afecta(r.cuenta);}).reduce(function(s,r){return s+_pn(r.monto);},0);
+    const totEf=(d.egresos||[]).reduce(function(s,r){return s+_pn(r.efectivo);},0);
+    const totCa=(d.egresos||[]).reduce(function(s,r){return s+_pn(r.cartera);},0);
+    const totEg=(d.egresos||[]).reduce(function(s,r){return s+_pn(r.monto);},0);
+    const si=_pn(d.saldoInicial);
+    const sf=si+ingAf-totEf-totCa;
+    let ingRows='';
+    (d.ingresos||[]).forEach(function(r){ ingRows+='<tr><td>'+(r.cuenta||'—')+'</td><td>'+(r.concepto||r.caja||'—')+'</td><td style="text-align:right;font-family:monospace">$ '+_fn(r.monto)+'</td></tr>'; });
+    if(!ingRows) ingRows='<tr><td colspan="3" style="text-align:center;color:#94a3b8">Sin ingresos</td></tr>';
+    let egrRows='';
+    (d.egresos||[]).forEach(function(r){ egrRows+='<tr><td>'+(r.tipo||'CAJA')+'</td><td>'+(r.cuenta||'—')+'</td><td>'+(r.proveedor||'—')+'</td><td style="text-align:right;font-family:monospace">$ '+_fn(r.monto)+'</td><td style="text-align:right;font-family:monospace">$ '+_fn(r.efectivo)+'</td><td style="text-align:right;font-family:monospace">$ '+_fn(r.cartera)+'</td></tr>'; });
+    if(!egrRows) egrRows='<tr><td colspan="6" style="text-align:center;color:#94a3b8">Sin egresos</td></tr>';
+    dayBlocks+='<div class="day-block">'+
+      '<div class="day-head"><span class="day-date">'+fechaLabel+'</span><span class="day-est">'+(d.closed?'✓ Cerrado':'Abierto')+'</span></div>'+
+      '<div class="summary-grid">'+
+        '<div class="sc"><div class="label">Saldo Inicial</div><div class="val sv-blue">$ '+_fn(si)+'</div></div>'+
+        '<div class="sc"><div class="label">Ingresos (afecta caja)</div><div class="val sv-green">$ '+_fn(ingAf)+'</div></div>'+
+        '<div class="sc"><div class="label">Egresos (Ef+Cheq)</div><div class="val sv-red">$ '+_fn(totEf+totCa)+'</div></div>'+
+        '<div class="sc" style="border:2px solid #93c5fd"><div class="label">Saldo Final</div><div class="val" style="color:'+(sf>=0?'#1e3a5f':'#dc2626')+'">$ '+_fn(sf)+'</div></div>'+
+      '</div>'+
+      '<div class="section-title green">INGRESOS</div>'+
+      '<table><thead><tr><th>Cuenta</th><th>Concepto</th><th class="ar">Monto</th></tr></thead><tbody>'+ingRows+'</tbody>'+
+      '<tfoot><tr><td colspan="2">TOTAL INGRESOS</td><td>$ '+_fn(totIngTotal)+'</td></tr></tfoot></table>'+
+      '<div class="section-title red">EGRESOS</div>'+
+      '<table><thead><tr><th>Tipo</th><th>Cuenta</th><th>Proveedor</th><th class="ar">Monto</th><th class="ar">Efectivo</th><th class="ar">Cheques</th></tr></thead><tbody>'+egrRows+'</tbody>'+
+      '<tfoot><tr><td colspan="3">TOTALES</td><td>$ '+_fn(totEg)+'</td><td>$ '+_fn(totEf)+'</td><td>$ '+_fn(totCa)+'</td></tr></tfoot></table>'+
+    '</div>';
+  });
+
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte Mensual — '+monthLabel+'</title>'+
+'<style>'+
+'*{box-sizing:border-box;margin:0;padding:0}'+
+"body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#0f172a;background:#fff;padding:20px}"+
+'.pdf-header{background:#1e3a5f;color:#fff;padding:16px 20px;border-radius:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}'+
+'.pdf-header h1{font-size:18px;font-weight:700}'+
+'.pdf-header .sub{font-size:10px;color:#7ea9d4;margin-top:2px}'+
+'.pdf-header .d{font-size:15px;font-weight:600;text-transform:capitalize;text-align:right}'+
+'.pdf-header .gen{font-size:9px;color:#7ea9d4;margin-top:3px;text-align:right}'+
+'.month-tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}'+
+'.mt{border:1px solid #e2e8f0;border-radius:6px;padding:10px 12px;background:#f8fafc}'+
+'.mt .label{font-size:9px;color:#64748b}'+
+'.mt .val{font-family:monospace;font-size:15px;font-weight:700}'+
+'.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}'+
+'.sc{border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;background:#f8fafc}'+
+'.sc .label{font-size:9px;color:#64748b;margin-bottom:2px}'+
+'.sc .val{font-family:monospace;font-size:13px;font-weight:700}'+
+'.sv-blue{color:#1e3a5f}.sv-green{color:#166534}.sv-red{color:#991b1b}'+
+'.section-title{color:#fff;padding:6px 10px;font-size:10px;font-weight:600;margin-top:10px;border-radius:4px 4px 0 0}'+
+'.section-title.green{background:#166534}.section-title.red{background:#7c2d12}'+
+'table{width:100%;border-collapse:collapse;margin-bottom:10px}'+
+'th{background:#f1f5f9;padding:5px 7px;font-size:9px;font-weight:600;color:#374151;text-align:left;border-bottom:1px solid #e2e8f0}'+
+'th.ar{text-align:right}'+
+'td{padding:4px 7px;border-bottom:1px solid #f1f5f9;font-size:10px}'+
+'tfoot td{background:#f8fafc;border-top:2px solid #e2e8f0;font-weight:700;font-family:monospace;font-size:11px;text-align:right;padding:6px 7px}'+
+'tfoot td:first-child{font-family:inherit;text-align:left}'+
+'.day-block{page-break-before:always;padding-top:6px}'+
+'.day-head{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin-bottom:10px}'+
+'.day-date{font-size:14px;font-weight:700;text-transform:capitalize;color:#1e3a5f}'+
+'.day-est{font-size:10px;font-weight:600;color:#64748b}'+
+'@media print{ body{padding:10px} @page{margin:1.2cm;size:A4} }'+
+'</style></head><body>'+
+'<div class="pdf-header"><div><h1>📆 Reporte Mensual — CARMAR</h1><div class="sub">Carlos Martín e Hijos S.A.</div></div>'+
+'<div><div class="d">'+monthLabel+'</div><div class="gen">Generado: '+genAt+'</div></div></div>'+
+'<div class="month-tot">'+
+'<div class="mt"><div class="label">Total Ingresos del mes</div><div class="val" style="color:#166534">$ '+_fn(mIng)+'</div></div>'+
+'<div class="mt"><div class="label">Total Egresos del mes</div><div class="val" style="color:#991b1b">$ '+_fn(mEg)+'</div></div>'+
+'<div class="mt"><div class="label">Días cargados</div><div class="val" style="color:#1e3a5f">'+days.length+'</div></div>'+
+'</div>'+
+'<div class="section-title" style="background:#374151">RESUMEN DEL MES</div>'+
+'<table><thead><tr><th>Fecha</th><th class="ar">Saldo Ini.</th><th class="ar">Ingresos</th><th class="ar">Egresos</th><th class="ar">Saldo Final</th><th>Estado</th></tr></thead><tbody>'+sumRows+'</tbody></table>'+
+dayBlocks+
+'</body></html>';
+}
+
+
 // ===================== CLEAR DATA =====================
 function confirmClearData(){
   if(!confirm('\u00bfEst\u00e1s seguro? Se borrar\u00e1n TODOS los datos guardados. Esta acci\u00f3n no se puede deshacer.')) return;
@@ -2133,6 +2338,10 @@ window.confirmClearData=confirmClearData;
 window.exportData=exportData;
 window.importData=importData;
 window.handleImport=handleImport;
+window.downloadBackup=downloadBackup;
+window.renderReporte=renderReporte;
+window.setReporteMonth=setReporteMonth;
+window.generateMonthPDF=generateMonthPDF;
 window.addIng=addIng;
 window.updIngEl=updIngEl;
 window.delIngEl=delIngEl;
