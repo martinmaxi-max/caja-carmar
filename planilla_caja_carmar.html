@@ -1471,54 +1471,37 @@ function updNoAfectaTipo(el){
 }
 
 async function renderDolares(){
-  const date=state.date;
-  const month=date.slice(0,7);
-  const y=parseInt(date.slice(0,4));
-  const m=parseInt(date.slice(5,7));
-  const dim=new Date(y,m,0).getDate();
-  const movs=[];
-  let saldo=0;
-  for(let i=1;i<=dim;i++){
-    const d=String(i).padStart(2,'0');
-    const raw=localStorage.getItem('caja_day_'+month+'-'+d);
-    if(!raw)continue;
-    const data=JSON.parse(raw);
-    const dd=new Date(month+'-'+d+'T12:00:00');
-    const dlbl=dd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
-    if(data.ingresos){
-      data.ingresos.forEach(function(r){
-        if(r.dolares&&parseFloat(r.dolares)){
-          movs.push({fecha:dlbl,tipo:'INGRESO',detalle:r.concepto||r.cuenta,pesos:pn(r.monto),usd:parseFloat(r.dolares),signo:1});
-        }
-      });
-    }
-    if(data.egresos){
-      data.egresos.forEach(function(r){
-        if(r.noAfectaDolares&&parseFloat(r.noAfectaDolares)){
-          movs.push({fecha:dlbl,tipo:'EGRESO',detalle:r.proveedor||r.cuenta,pesos:pn(r.propios),usd:parseFloat(r.noAfectaDolares),signo:-1});
-        }
-      });
-    }
-  }
-  const mn=new Date(month+'-15').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
-  let tbody='';
+  const movs=getAllDolarMovs();
+  let saldo=0,totIn=0,totOut=0,tbody='',curMonth='';
   movs.forEach(function(mv){
+    const mk=mv.date.slice(0,7);
+    if(mk!==curMonth){
+      curMonth=mk;
+      const ml=new Date(mk+'-15T12:00:00').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+      tbody+='<tr style="background:#f1f5f9"><td colspan="6" style="font-weight:700;color:#334155;font-size:10px;text-transform:uppercase;letter-spacing:.5px">'+ml+'</td></tr>';
+    }
     saldo+=mv.signo*mv.usd;
+    if(mv.signo>0) totIn+=mv.usd; else totOut+=mv.usd;
     tbody+='<tr>'
       +'<td>'+mv.fecha+'</td>'
       +'<td><span style="font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600;background:'+(mv.signo>0?'#dcfce7':'#fef2f2')+';color:'+(mv.signo>0?'#166534':'#991b1b')+'">'+mv.tipo+'</span></td>'
       +'<td>'+mv.detalle+'</td>'
       +'<td style="text-align:right;font-family:monospace">$ '+fnd(mv.pesos)+'</td>'
-      +'<td style="text-align:right;font-family:monospace;color:'+(mv.signo>0?'#166534':'#991b1b');
-    tbody+=';font-weight:600">'+(mv.signo>0?'+ ':'− ')+'USD '+mv.usd.toFixed(2)+'</td>'
+      +'<td style="text-align:right;font-family:monospace;font-weight:600;color:'+(mv.signo>0?'#166534':'#991b1b')+'">'+(mv.signo>0?'+ ':'\u2212 ')+'USD '+mv.usd.toFixed(2)+'</td>'
       +'<td style="text-align:right;font-family:monospace;font-weight:600;color:'+(saldo>=0?'#1e3a5f':'#dc2626')+'">USD '+saldo.toFixed(2)+'</td>'
       +'</tr>';
   });
-  if(!movs.length) tbody='<tr><td colspan="6" style="text-align:center;padding:32px;color:#94a3b8">Sin movimientos en dólares para este mes</td></tr>';
+  if(!movs.length) tbody='<tr><td colspan="6" style="text-align:center;padding:32px;color:#94a3b8">Sin movimientos en d\u00f3lares cargados</td></tr>';
   document.getElementById('content').innerHTML=
     '<div class="resumen-wrap">'
-    +'<div class="resumen-head"><h2>Dólares — '+mn+'</h2>'
+    +'<div class="resumen-head"><h2>D\u00f3lares \u2014 Hist\u00f3rico completo</h2>'
     +'<span style="font-family:monospace;font-weight:700;font-size:14px;color:'+(saldo>=0?'#86efac':'#fca5a5')+'">Saldo: USD '+saldo.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 4px">'
+      +'<button onclick="generateDolaresPDF()" style="padding:8px 14px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">\ud83d\udcc4 Descargar PDF</button>'
+      +'<span style="font-size:11px;color:#166534;font-weight:600">Ingresos: USD '+totIn.toFixed(2)+'</span>'
+      +'<span style="font-size:11px;color:#991b1b;font-weight:600">Egresos: USD '+totOut.toFixed(2)+'</span>'
+      +'<span style="font-size:11px;color:#64748b">'+movs.length+' movimiento'+(movs.length!==1?'s':'')+'</span>'
+    +'</div>'
     +'<div class="tbl-wrap"><table class="resumen" style="font-size:11px">'
     +'<thead><tr>'
     +'<th style="text-align:left">Fecha</th><th style="text-align:left">Tipo</th><th style="text-align:left">Detalle</th>'
@@ -1526,6 +1509,93 @@ async function renderDolares(){
     +'</tr></thead>'
     +'<tbody>'+tbody+'</tbody>'
     +'</table></div></div>';
+}
+
+// Junta TODOS los movimientos en d\u00f3lares de TODOS los d\u00edas, ordenados por fecha ascendente.
+function getAllDolarMovs(){
+  const dayKeys=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('caja_day_')) dayKeys.push(k);
+  }
+  dayKeys.sort();
+  const movs=[];
+  dayKeys.forEach(function(k){
+    let data=null;
+    try{ data=JSON.parse(localStorage.getItem(k)); }catch(e){ return; }
+    if(!data||!data.date) return;
+    const dd=new Date(data.date+'T12:00:00');
+    const dlbl=dd.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    (data.ingresos||[]).forEach(function(r){
+      if(r.dolares&&parseFloat(r.dolares)){
+        movs.push({date:data.date,fecha:dlbl,tipo:'INGRESO',detalle:r.concepto||r.cuenta||'\u2014',pesos:pn(r.monto),usd:parseFloat(r.dolares),signo:1});
+      }
+    });
+    (data.egresos||[]).forEach(function(r){
+      if(r.noAfectaDolares&&parseFloat(r.noAfectaDolares)){
+        movs.push({date:data.date,fecha:dlbl,tipo:'EGRESO',detalle:r.proveedor||r.cuenta||'\u2014',pesos:pn(r.propios),usd:parseFloat(r.noAfectaDolares),signo:-1});
+      }
+    });
+  });
+  return movs;
+}
+
+function generateDolaresPDF(){
+  const movs=getAllDolarMovs();
+  if(!movs.length){ alert('No hay movimientos en d\u00f3lares cargados.'); return; }
+  const html=buildDolaresPDFHTML(movs);
+  const w=window.open('','_blank','width=900,height=700');
+  if(!w){ alert('Tu navegador bloque\u00f3 el popup. Permit\u00ed ventanas emergentes para esta p\u00e1gina.'); return; }
+  w.document.write(html); w.document.close();
+  setTimeout(function(){ w.print(); }, 600);
+}
+
+function buildDolaresPDFHTML(movs){
+  const genAt=new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  function _fnd(n){return new Intl.NumberFormat('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(parseFloat(n)||0);}
+  let saldo=0,totIn=0,totOut=0,rows='',curMonth='';
+  movs.forEach(function(mv){
+    const mk=mv.date.slice(0,7);
+    if(mk!==curMonth){ curMonth=mk; const ml=new Date(mk+'-15T12:00:00').toLocaleDateString('es-AR',{month:'long',year:'numeric'}); rows+='<tr class="mrow"><td colspan="6">'+ml+'</td></tr>'; }
+    saldo+=mv.signo*mv.usd;
+    if(mv.signo>0) totIn+=mv.usd; else totOut+=mv.usd;
+    rows+='<tr>'
+      +'<td>'+mv.fecha+'</td>'
+      +'<td>'+mv.tipo+'</td>'
+      +'<td>'+mv.detalle+'</td>'
+      +'<td class="num">$ '+_fnd(mv.pesos)+'</td>'
+      +'<td class="num" style="color:'+(mv.signo>0?'#166534':'#991b1b')+'">'+(mv.signo>0?'+ ':'\u2212 ')+'USD '+mv.usd.toFixed(2)+'</td>'
+      +'<td class="num" style="font-weight:700;color:'+(saldo>=0?'#1e3a5f':'#dc2626')+'">USD '+saldo.toFixed(2)+'</td>'
+      +'</tr>';
+  });
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte D\u00f3lares \u2014 CARMAR</title>'
+  +'<style>'
+  +'*{box-sizing:border-box;margin:0;padding:0}'
+  +"body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#0f172a;background:#fff;padding:20px}"
+  +'.pdf-header{background:#1e3a5f;color:#fff;padding:16px 20px;border-radius:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}'
+  +'.pdf-header h1{font-size:18px;font-weight:700}'
+  +'.pdf-header .sub{font-size:10px;color:#7ea9d4;margin-top:2px}'
+  +'.pdf-header .gen{font-size:9px;color:#7ea9d4;text-align:right}'
+  +'.tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}'
+  +'.tc{border:1px solid #e2e8f0;border-radius:6px;padding:10px 12px;background:#f8fafc}'
+  +'.tc .label{font-size:9px;color:#64748b}'
+  +'.tc .val{font-family:monospace;font-size:15px;font-weight:700}'
+  +'table{width:100%;border-collapse:collapse}'
+  +'th{background:#f1f5f9;padding:5px 7px;font-size:9px;font-weight:600;color:#374151;text-align:left;border-bottom:1px solid #e2e8f0}'
+  +'th.num,td.num{text-align:right;font-family:monospace}'
+  +'td{padding:4px 7px;border-bottom:1px solid #f1f5f9;font-size:10px}'
+  +'tr.mrow td{background:#e2e8f0;font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:.5px;color:#334155;padding:5px 7px}'
+  +'@media print{ body{padding:10px} @page{margin:1.2cm;size:A4} thead{display:table-header-group} }'
+  +'</style></head><body>'
+  +'<div class="pdf-header"><div><h1>\ud83d\udcb5 Reporte de D\u00f3lares \u2014 CARMAR</h1><div class="sub">Carlos Mart\u00edn e Hijos S.A. \u2014 Hist\u00f3rico completo</div></div>'
+  +'<div><div class="gen">Generado: '+genAt+'</div></div></div>'
+  +'<div class="tot">'
+  +'<div class="tc"><div class="label">Total Ingresos USD</div><div class="val" style="color:#166534">USD '+totIn.toFixed(2)+'</div></div>'
+  +'<div class="tc"><div class="label">Total Egresos USD</div><div class="val" style="color:#991b1b">USD '+totOut.toFixed(2)+'</div></div>'
+  +'<div class="tc"><div class="label">Saldo Final USD</div><div class="val" style="color:'+(saldo>=0?'#1e3a5f':'#dc2626')+'">USD '+saldo.toFixed(2)+'</div></div>'
+  +'</div>'
+  +'<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th><th class="num">Pesos</th><th class="num">USD</th><th class="num">Saldo USD</th></tr></thead><tbody>'+rows+'</tbody></table>'
+  +'</body></html>';
 }
 
 
@@ -2340,6 +2410,7 @@ window.downloadBackup=downloadBackup;
 window.renderReporte=renderReporte;
 window.setReporteMonth=setReporteMonth;
 window.generateMonthPDF=generateMonthPDF;
+window.generateDolaresPDF=generateDolaresPDF;
 window.addIng=addIng;
 window.updIngEl=updIngEl;
 window.delIngEl=delIngEl;
