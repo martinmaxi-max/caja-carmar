@@ -2052,8 +2052,8 @@ function buildMonthPDFHTML(days, month){
   const monthLabel=new Date(month+'-01T12:00:00').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
   const AFECTA=['CAJA EFECTIVO','CHEQUES EN CARTERA','CHEQUES FISICOS','CHEQUES','ECHEQS','ECHEQ','CAJA'];
   function afecta(cuenta){ if(!cuenta)return true; const u=cuenta.toUpperCase(); if(AFECTA.some(function(c){return u===c.toUpperCase();}))return true; return ['CHEQUE','ECHEQ','EFECTIVO'].some(function(k){return u.includes(k);}); }
-  function _pn(s){if(s===''||s===undefined||s===null)return 0;const cl=String(s).replace(/[^\d,.-]/g,'');return parseFloat(cl.replace(/\./g,'').replace(',','.'))||0;}
-  function _fn(v){const n=parseFloat(v)||0;return new Intl.NumberFormat('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
+  function _pn(s){return pn(s);}
+  function _fn(v){const n=(typeof v==='number')?v:pn(v);return new Intl.NumberFormat('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0);}
 
   let mIng=0,mEg=0;
   let sumRows='';
@@ -2089,8 +2089,27 @@ function buildMonthPDFHTML(days, month){
     (d.ingresos||[]).forEach(function(r){ ingRows+='<tr><td>'+(r.cuenta||'—')+'</td><td>'+(r.concepto||r.caja||'—')+'</td><td style="text-align:right;font-family:monospace">$ '+_fn(r.monto)+'</td></tr>'; });
     if(!ingRows) ingRows='<tr><td colspan="3" style="text-align:center;color:#94a3b8">Sin ingresos</td></tr>';
     let egrRows='';
-    (d.egresos||[]).forEach(function(r){ egrRows+='<tr><td>'+(r.tipo||'CAJA')+'</td><td>'+(r.cuenta||'—')+'</td><td>'+(r.proveedor||'—')+'</td><td style="text-align:right;font-family:monospace">$ '+_fn(r.monto)+'</td><td style="text-align:right;font-family:monospace">$ '+_fn(r.efectivo)+'</td><td style="text-align:right;font-family:monospace">$ '+_fn(r.cartera)+'</td></tr>'; });
-    if(!egrRows) egrRows='<tr><td colspan="6" style="text-align:center;color:#94a3b8">Sin egresos</td></tr>';
+    const totPr=(d.egresos||[]).reduce(function(s,r){return s+_pn(r.propios);},0);
+    (d.egresos||[]).forEach(function(r){
+      const isTes=r.tipo==='TESORERIA';
+      const naM=_pn(r.propios);
+      const naTipoMap={CHPROP:'CH.PROP',TRANS:'TRANS',USD:'USD'};
+      const naTipo=naTipoMap[r.noAfectaTipo]||(r.noAfectaTipo||'');
+      const naUSD=(r.noAfectaTipo==='USD'&&r.noAfectaDolares)?' (USD '+(parseFloat(r.noAfectaDolares)||0).toFixed(2)+')':'';
+      const naCell=(naM||naTipo)?('$ '+_fn(naM)+(naTipo?' <span style="font-size:8px;color:#64748b">'+naTipo+naUSD+'</span>':'')):'—';
+      const ctrl2=_pn(r.monto)-_pn(r.efectivo)-_pn(r.cartera)-naM;
+      const ok2=Math.abs(ctrl2)<1;
+      let est='—';
+      if(isTes){ est=r.verified?('✓ '+(r.verifiedBy==='marisol'?'Marisol':'Maxi')+(r.verifiedAt?' '+r.verifiedAt:'')):'⏳ Pendiente'; }
+      egrRows+='<tr><td>'+(r.tipo||'CAJA')+'</td><td>'+(r.cuenta||'—')+'</td><td>'+(r.proveedor||'—')+'</td>'+
+        '<td style="text-align:right;font-family:monospace">$ '+_fn(r.monto)+'</td>'+
+        '<td style="text-align:right;font-family:monospace">$ '+_fn(r.efectivo)+'</td>'+
+        '<td style="text-align:right;font-family:monospace">$ '+_fn(r.cartera)+'</td>'+
+        '<td style="text-align:right;font-family:monospace">'+naCell+'</td>'+
+        '<td style="text-align:right;font-family:monospace;color:'+(ok2?'#166534':'#dc2626')+'">'+_fn(ctrl2)+'</td>'+
+        '<td style="font-size:9px;white-space:nowrap">'+est+'</td></tr>';
+    });
+    if(!egrRows) egrRows='<tr><td colspan="9" style="text-align:center;color:#94a3b8">Sin egresos</td></tr>';
     dayBlocks+='<div class="day-block">'+
       '<div class="day-head"><span class="day-date">'+fechaLabel+'</span><span class="day-est">'+(d.closed?'✓ Cerrado':'Abierto')+'</span></div>'+
       '<div class="summary-grid">'+
@@ -2103,8 +2122,8 @@ function buildMonthPDFHTML(days, month){
       '<table><thead><tr><th>Cuenta</th><th>Concepto</th><th class="ar">Monto</th></tr></thead><tbody>'+ingRows+'</tbody>'+
       '<tfoot><tr><td colspan="2">TOTAL INGRESOS</td><td>$ '+_fn(totIngTotal)+'</td></tr></tfoot></table>'+
       '<div class="section-title red">EGRESOS</div>'+
-      '<table><thead><tr><th>Tipo</th><th>Cuenta</th><th>Proveedor</th><th class="ar">Monto</th><th class="ar">Efectivo</th><th class="ar">Cheques</th></tr></thead><tbody>'+egrRows+'</tbody>'+
-      '<tfoot><tr><td colspan="3">TOTALES</td><td>$ '+_fn(totEg)+'</td><td>$ '+_fn(totEf)+'</td><td>$ '+_fn(totCa)+'</td></tr></tfoot></table>'+
+      '<table><thead><tr><th>Tipo</th><th>Cuenta</th><th>Proveedor / Concepto</th><th class="ar">Monto</th><th class="ar">Efectivo</th><th class="ar">Cheques</th><th class="ar">No afecta</th><th class="ar">Control</th><th>Estado</th></tr></thead><tbody>'+egrRows+'</tbody>'+
+      '<tfoot><tr><td colspan="3">TOTALES</td><td>$ '+_fn(totEg)+'</td><td>$ '+_fn(totEf)+'</td><td>$ '+_fn(totCa)+'</td><td>$ '+_fn(totPr)+'</td><td></td><td></td></tr></tfoot></table>'+
     '</div>';
   });
 
@@ -2131,7 +2150,7 @@ function buildMonthPDFHTML(days, month){
 'table{width:100%;border-collapse:collapse;margin-bottom:10px}'+
 'th{background:#f1f5f9;padding:5px 7px;font-size:9px;font-weight:600;color:#374151;text-align:left;border-bottom:1px solid #e2e8f0}'+
 'th.ar{text-align:right}'+
-'td{padding:4px 7px;border-bottom:1px solid #f1f5f9;font-size:10px}'+
+'td{padding:4px 5px;border-bottom:1px solid #f1f5f9;font-size:9.5px}'+
 'tfoot td{background:#f8fafc;border-top:2px solid #e2e8f0;font-weight:700;font-family:monospace;font-size:11px;text-align:right;padding:6px 7px}'+
 'tfoot td:first-child{font-family:inherit;text-align:left}'+
 '.day-block{page-break-before:always;padding-top:6px}'+
